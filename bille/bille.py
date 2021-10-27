@@ -25,17 +25,17 @@ bpy.context.scene.frame_end = int(total_time*fps)+1
 keyframe_freq = 10
 nlast = bpy.context.scene.frame_end
 
-r = 1.4  # radius of the pendulum
-m = 0.04  # mass of ball
+r = 0.14  # radius of the pendulum
+m = 0.0053  # mass of ball
 g = 9.81
-a = 0.1465  # rad, amplitude initiale
+a = 0.1433  # rad, amplitude initiale
 lamda = 0.02  # Friction coeff
 p = lamda
 k = math.sqrt(m * g / r)
 h = math.sqrt(k ** 2 / m - p ** 2 / (4 * m ** 2))
 
-xs = [-0.2, 0, 0.2]
-ys = [0, -0.015, 0]
+xs = [-0.02, 0, 0.02]
+ys = [0, -0.0015, 0]
 coeffs_parabole = np.polyfit(xs, ys, 2)
 
 
@@ -46,8 +46,7 @@ for n in range(nlast):
     theta = a * math.e ** (-lamda * t / (2 * m))*(math.cos(h * t) + lamda / (2 * m * h) * math.sin(h * t))
     new_x = r * math.sin(theta)
     new_y = 0
-    new_z = coeffs_parabole[0] * new_x ** 2 +coeffs_parabole[1]*new_x + coeffs_parabole[2] + (0.02) # polyfit de la parabole +offset radius de la bille
-    print(new_z)
+    new_z = coeffs_parabole[0] * new_x ** 2 +coeffs_parabole[1]*new_x + coeffs_parabole[2] + 0.016/2 # polyfit de la parabole + offset radius de la bille
     
     # Check if n is a multiple of keyframe_freq
     if n%keyframe_freq == 0:
