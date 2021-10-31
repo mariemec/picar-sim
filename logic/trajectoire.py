@@ -1,5 +1,8 @@
+from simulation import Simulation
+
 import numpy as np
 import math
+
 
 class Trajectoire:
 
@@ -47,12 +50,12 @@ class Droite:
         self.x_end, self.y_end = end_coord
 
     def generate_path(self):
-        slope = (self.y_end-self.y_start)/(self.x_end-self.x_start) # slope of segment
-        b = self.y_start-self.x_start*slope
+        slope = (self.y_end - self.y_start) / (self.x_end - self.x_start)  # slope of segment
+        b = self.y_start - self.x_start * slope
 
         path_coords = list()
-        for x in range(self.x_start, self.x_end+1, 1):
-            y = slope*x+b
+        for x in range(self.x_start, self.x_end + 1, 1):
+            y = slope * x + b
             path_coords.append((x, int(y)))
 
         return path_coords
@@ -72,16 +75,17 @@ class Courbe:
             raise ValueError('Start angle of curve must be smaller than end angle')
 
         for theta in np.arange(self.start_angle, self.end_angle, 0.1):
-            x = self.radius*math.cos(theta)
-            y = self.radius*math.sin(theta)
-            path_coords.append((self.center_x+int(x), self.center_y+int(y)))
+            x = self.radius * math.cos(theta)
+            y = self.radius * math.sin(theta)
+            path_coords.append((self.center_x + int(x), self.center_y + int(y)))
 
         return path_coords
+
 
 if __name__ == '__main__':
     segs = list()
     segs.append(Droite((0, 0), (5, 5)))
-    segs.append(Courbe((10, 5), 5, math.pi, math.pi*2))
+    segs.append(Courbe((10, 5), 5, math.pi, math.pi * 2))
     t = Trajectoire(segs, 20, 20)
     t.show()
 
