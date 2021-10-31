@@ -39,6 +39,7 @@ class Map:
         print('\n'.join([' '.join([f'{item}' for item in row])
                          for row in rotated]))
 
+
 class Droite:
 
     def __init__(self, start_coord, end_coord):
