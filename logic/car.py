@@ -1,14 +1,15 @@
 import numpy as np
 
 from simulation import Simulation
+from position import Position
 
 
 class Car:
-    position = (0, 0)
     orientation = 0
     speed_factor = 0
 
-    def __init__(self):
+    def __init__(self, x=0, y=0):
+        self.position = Position(x, y)
         self.line_follower = LineFollower(self.position)
         self.distance_sensor = DistanceSensor(self.position)
 
@@ -16,8 +17,8 @@ class Car:
         self.orientation = self.line_follower.update_orientation(self.orientation)
         self.speed_factor = self.distance_sensor.update_speed_factor(self.speed_factor)
 
-        self.position[0] += self.speed_factor*np.cos(self.orientation)
-        self.position[1] += self.speed_factor*np.sin(self.orientation)
+        self.position.x += self.speed_factor*np.cos(self.orientation)
+        self.position.y += self.speed_factor*np.sin(self.orientation)
 
     def draw(self):
         pass
