@@ -1,3 +1,4 @@
 /logic/.idea/*
 .idea/
 __pycache__/
+/logic/main.py

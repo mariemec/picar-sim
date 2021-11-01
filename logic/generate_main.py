@@ -1,5 +1,5 @@
 def generate_main():
-    files = ["bille.py", "car.py", "position.py", "trajectoire.py", "simulation.py"]
+    files = ["position.py", "bille.py"] # "car.py",  "trajectoire.py", "simulation.py"
     out_lines = list()
 
     for filename in files:
@@ -8,6 +8,8 @@ def generate_main():
         out_lines.append(lines)
 
     out_file = open("main.py", "w")
+    out_file.write("import bpy\n")
+    out_file.write("import numpy as np\n")
     for line in out_lines:
         for str in line:
             if not str.startswith("from simulation") and not str.startswith("from position"):
