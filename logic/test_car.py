@@ -1,11 +1,16 @@
 import logging
 
 from simulation import Simulation
-from car import Car  # important pour ajouter un object car à simulation
+
+
+"""
+To run test use 
+>>> pytest --log-cli-level=DEBUG
+"""
 
 
 def test_line_follower():
-    car = Simulation().car
+    car = Simulation(0, 0, []).car
     orientation = car.orientation
     logging.info(f'orientation début: {car.orientation}')
 
@@ -38,7 +43,7 @@ def test_line_follower():
 
 
 def test_distance_sensor():
-    car = Simulation().car
+    car = Simulation(0, 0, []).car
     for i in range(12):
         car.speed_factor = car.distance_sensor.update_speed_factor(car.speed_factor)
         logging.info(car.speed_factor)
