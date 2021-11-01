@@ -1,7 +1,12 @@
 import logging
 
 from simulation import Simulation
-from car import Car  # important pour ajouter un object car à simulation
+
+
+"""
+To run test use 
+>>> pytest --log-cli-level=DEBUG
+"""
 
 
 def test_line_follower():

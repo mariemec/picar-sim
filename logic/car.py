@@ -1,6 +1,5 @@
 # ------------------------ CAR ------------------------
 import numpy as np
-from simulation import Simulation
 from position import Position
 
 
@@ -8,9 +7,9 @@ class Car:
     orientation = 0
     speed_factor = 0
 
-    def __init__(self, x=0, y=0):
+    def __init__(self, _map, x=0, y=0):
         self.position = Position(x, y)
-        self.line_follower = LineFollower(self.position)
+        self.line_follower = LineFollower(self.position, _map)
         self.distance_sensor = DistanceSensor(self.position)
 
     def calculate_next_pos(self):
@@ -27,12 +26,13 @@ class Car:
 class LineFollower:
     sensor_state = [False]*5
 
-    def __init__(self, position):
+    def __init__(self, position, _map):
         self.position = position
+        self._map = _map
 
     def get_state(self):
         for i in range(len(self.sensor_state)):
-            self.sensor_state[i] = simulation.trajectoire.peak(self.position)
+            self.sensor_state[i] = self._map[self.position.x][self.position.y]
 
     def update_orientation(self, orientation):
         if self.sensor_state[0]:
