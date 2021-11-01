@@ -1,7 +1,6 @@
 # ----------------------- BILLE -----------------------
 from position import Position
 
-
 class Bille:
 
     def __init__(self, theta=0, x=0, y=0):
@@ -15,9 +14,33 @@ class Bille:
         # TO-DO
         return 0
 
-    def blender_init(self):
-        return 0
+    # CODE BELOW ONLY WORKS IN BLENDER - UNCOMMENT PLZ
+    # def blender_init(self):
+    #     bpy.ops.mesh.primitive_uv_sphere_add(radius=0.016, enter_editmode=False, align='WORLD', location=(0, 0, 0),
+    #                                          scale=(1, 1, 1))
+    #     bpy.context.active_object.name = 'bille'
+    #     self._bille = myobj = bpy.data.objects['bille']
+    #
+    # def blender_update(self, x, y):
+    #     self.position.x = x
+    #     self.position.y = y
+    #     self._bille.location.x = x
+    #     self._bille.location.y = y
 
-    def blender_update(self, x, y):
-        return 0
+# Example
+# my_bille = Bille()
+# my_bille.blender_init()
+# my_bille._bille.animation_data_clear()
+# total_time = 2*math.pi # Animation should be 2*pi seconds long
+# fps = 24 # Frames per second (fps)
+# bpy.context.scene.frame_start = 0
+# bpy.context.scene.frame_end = int(total_time*fps)+1
+# keyframe_freq = 10
+# nlast = bpy.context.scene.frame_end
 
+# for n in range(nlast):
+#     t = total_time*n/nlast
+#
+#     if n%keyframe_freq == 0:
+#         bpy.context.scene.frame_set(n)
+#         my_bille.blender_update(0.1*math.sin(t), 0)
