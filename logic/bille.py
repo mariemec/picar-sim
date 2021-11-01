@@ -1,4 +1,4 @@
-import numpy as np
+# ----------------------- BILLE -----------------------
 from position import Position
 
 
@@ -14,3 +14,10 @@ class Bille:
     def calculate_next_pos(self):
         # TO-DO
         return 0
+
+    def blender_init(self):
+        return 0
+
+    def blender_update(self, x, y):
+        return 0
+

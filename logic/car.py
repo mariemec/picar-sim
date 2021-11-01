@@ -1,5 +1,5 @@
+# ------------------------ CAR ------------------------
 import numpy as np
-
 from simulation import Simulation
 from position import Position
 
@@ -82,5 +82,3 @@ class DistanceSensor:
 
         return round(speed_factor, 4)
 
-
-simulation = Simulation(car=Car())
