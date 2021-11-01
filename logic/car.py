@@ -4,11 +4,11 @@ from position import Position
 
 
 class Car:
-    orientation = 0
     speed_factor = 0
 
-    def __init__(self, _map, x=0, y=0):
+    def __init__(self, _map, x=0, y=0, orientation=0):
         self.position = Position(x, y)
+        self.orientation = orientation
         self.line_follower = LineFollower(self.position, _map)
         self.distance_sensor = DistanceSensor(self.position)
 
@@ -32,7 +32,7 @@ class LineFollower:
 
     def get_state(self):
         for i in range(len(self.sensor_state)):
-            self.sensor_state[i] = self._map[self.position.x][self.position.y]
+            self.sensor_state[i] = self._map.peek(self.position.x, self.position.y)
 
     def update_orientation(self, orientation):
         if self.sensor_state[0]:
@@ -57,9 +57,9 @@ class LineFollower:
 
 
 class DistanceSensor:
-    distance = 10
-    slowing_distance = 1
-    stopping_distance = 0.1
+    distance = 10  # temporaire -> va être initialisé à 0 et updaté dans get_distance()
+    slowing_distance = 1  # doit être changé par le bonne valeur
+    stopping_distance = 0.1  # doit être changé par la bonne valeur
 
     def __init__(self, position):
         self.position = position

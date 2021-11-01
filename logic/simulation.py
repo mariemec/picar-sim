@@ -3,6 +3,6 @@ from car import Car
 
 
 class Simulation:
-    def __init__(self):
-        self.trajectoire = Trajectoire(m=100, n=100, segments=[Droite((0, 0), (99, 99))])
+    def __init__(self, m, n, segments):
+        self.trajectoire = Trajectoire(m=m, n=n, segments=segments)
         self.car = Car(self.trajectoire.map)
