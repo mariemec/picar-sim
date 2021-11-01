@@ -1,5 +1,4 @@
-from simulation import Simulation
-
+# -------------------- TRAJECTOIRE --------------------
 import numpy as np
 import math
 
