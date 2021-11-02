@@ -1,7 +1,10 @@
 # ----------------------- BILLE -----------------------
 from position import Position
+import numpy as np
+
 
 class Bille:
+    g = 9.81
 
     def __init__(self, theta=0, x=0, y=0):
         self.mass = 0.005
@@ -10,9 +13,33 @@ class Bille:
         self.position = Position(x, y)
         self.theta = theta
 
-    def calculate_next_pos(self):
-        # TO-DO
-        return 0
+    def calculate_next_theta(self, t, a, theta_0, omega_0, u):
+        damping = np.exp(-u * t)
+        b = self.g / self.radius_pendule
+        c = -a / self.radius_pendule
+        b_sqrt = np.sqrt(b)
+
+        A = theta_0 - c / b
+        B = omega_0 / b_sqrt
+
+        position = A * np.cos(b_sqrt * t) + B * np.sin(b_sqrt * t) + c / b
+
+        return position * damping  # Position = Theta * e^(-damp*t)
+
+    def calculate_next_omega(self, t, a, theta_0, omega_0, u):
+        damping = np.exp(-u * t)
+        b = self.g / self.radius_pendule
+        c = -a / self.radius_pendule
+        b_sqrt = np.sqrt(b)
+
+        A = theta_0 - c / b
+        B = omega_0 / b_sqrt
+
+        position = A * np.cos(b_sqrt * t) + B * np.sin(b_sqrt * t) + c / b
+        angular_velocity = -A * np.sin(b_sqrt * t) * b_sqrt + B * np.cos(b_sqrt * t) * b_sqrt
+
+        return angular_velocity * damping + -u * damping * position  # Velocity = d/dt(Position)
+
 
     # CODE BELOW ONLY WORKS IN BLENDER - UNCOMMENT PLZ
     # def blender_init(self):
