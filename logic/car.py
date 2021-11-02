@@ -18,21 +18,42 @@ class Car:
         orientation = self.line_follower.update_orientation(self.orientation)
         speed_factor = self.distance_sensor.update_speed_factor(self.speed_factor)
 
-        return speed_factor * np.cos(orientation), speed_factor*np.sin(orientation), orientation, speed_factor
+        return (self.position.x + speed_factor * np.cos(orientation),
+                self.position.y + speed_factor*np.sin(orientation),
+                orientation,
+                speed_factor)
 
     def blender_init(self):
-        bpy.ops.mesh.primitive_cube_add(location=(self.position.x, self.position.y, 0), rotation=(0, 0, self.orientation))
+        bpy.ops.mesh.primitive_cube_add(size=1, location=(self.position.x, self.position.y, 0), rotation=(0, 0, self.orientation))
         bpy.context.active_object.name = 'Car'
         self.car_obj = bpy.data.objects['Car']
 
     def blender_update(self):
         self.position.x, self.position.y, self.orientation, self.speed_factor = self.calculate_next_pos()
-        self.car_obj.location = self.position
-        self.car_obj.rotation_euler = self.orientation
+        self.car_obj.location[0] = self.position.x/100
+        self.car_obj.location[1] = self.position.y/100
+        self.car_obj.rotation_euler[2] = self.orientation
 
 
 class LineFollower:
-    sensor_state = [False]*5
+    """
+    test blender pour suiveur:
+    print('******************************************************************')
+    bpy.context.scene.frame_end = 500
+    sim = Simulation(501, 300, [Droite((0, 10), (50, 20))])
+    car = sim.car
+    car.position.x = 0
+    car.position.y = 10
+    car.blender_init()
+    for i in range(50):
+    bpy.context.scene.frame_set(i*10)
+    car.blender_update()
+    print(f'x: {car.position.x:.2f} | y: {car.position.y:.2f} | orientation: {car.orientation:.2f}')
+    print(f'x: {car.car_obj.location[0]:.2f} | y: {car.car_obj.location[1]:.2f}')
+    car.car_obj.keyframe_insert(data_path='location')
+    bpy.ops.screen.animation_play()
+    """
+    sensor_state = [0]*5
 
     def __init__(self, position, _map, v_max, refresh_rate):
         self.position = position
@@ -42,29 +63,33 @@ class LineFollower:
 
     def get_state(self, orientation):
         for i in range(len(self.sensor_state)):
-            offset_x = round((2*i) * np.cos(orientation), 0)
-            offset_y = round((2*i) * np.sin(orientation), 0)
-            self.sensor_state[i] = self._map.peek(self.position.x + offset_x, self.position.y + offset_y)
+            offset_x = (2*(i-2)) * np.sin(orientation)
+            offset_y = (2*(i-2)) * np.cos(orientation)
+            x = int(round(self.position.x + offset_x, 0))
+            y = int(round(self.position.y + offset_y, 0))
+            self.sensor_state[i] = self._map.peek(x, y)
+        print(self.sensor_state)
 
     def update_orientation(self, orientation):
         # changement d'orientation selon la (vitesse max * le temps d'un frame) / le rayon du cercle que la voiture va effectuer
-        if self.sensor_state[0]:
+        self.get_state(orientation)
+        if self.sensor_state[0] == 1:
             # tourne beaucoup à gauche
             orientation -= (self.v_max * (1 / self.refresh_rate))/0.012
-        elif self.sensor_state[4]:
+        elif self.sensor_state[4] == 1:
             # tourne beaucoup à droite
             orientation += (self.v_max * (1 / self.refresh_rate))/0.012
-        elif self.sensor_state[1]:
+        elif self.sensor_state[1] == 1:
             # tourne à gauche
-            orientation -= (self.v_max * (1 / self.refresh_rate))/0.015
-        elif self.sensor_state[3]:
+            orientation -= (self.v_max * (1 / self.refresh_rate))/0.024
+        elif self.sensor_state[3] == 1:
             # tourne à droite
-            orientation += (self.v_max * (1 / self.refresh_rate))/0.015
-        elif self.sensor_state[2]:
+            orientation += (self.v_max * (1 / self.refresh_rate))/0.024
+        elif self.sensor_state[2] == 1:
             # you're good
             orientation = orientation
-        else:
-            orientation -= (self.v_max * (1 / self.refresh_rate))/0.012
+#        else:
+#            orientation -= (self.v_max * (1 / self.refresh_rate))/0.012
 
         return round(orientation, 4)
 
