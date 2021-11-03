@@ -112,25 +112,23 @@ class Courbe:
             x = self.radius * math.cos(theta)
             y = self.radius * math.sin(theta)
             path_coords.append((self.center_x + int(x), self.center_y + int(y)))
-
+        
+        print(path_coords)
         return path_coords
     
     def draw(self):
-        bpy.ops.mesh.primitive_plane_add(size=1.0, calc_uvs=True, enter_editmode=False, 
-            align='WORLD', location=(0, 0, 0.0), 
+        path_coords = self.generate_path()
+        print('draw')
+        print(path_coords)
+        print(path_coords[1][1])
+        
+        for i, c in enumerate(path_coords):
+            print(i)
+            #print(c[0])
+            bpy.ops.mesh.primitive_plane_add(size=0.5, calc_uvs=True, enter_editmode=False, 
+            align='WORLD', location=(c[0], c[1], 0.0), 
             rotation=(0.0, 0.0, 0.0), scale=(1.0, 1.0, 1.0))
-        
-        bpy.context.active_object.dimensions = (1, 0.18, 0)
-        
-        bpy.ops.object.modifier_add(type='ARRAY')
-        bpy.context.object.modifiers["Array"].fit_type = 'FIT_CURVE'
-        
-        bpy.ops.curve.primitive_bezier_curve_add(radius=2.0, enter_editmode=False, align='WORLD', 
-            location=(0.0, 0.0, 0.0), scale=(1, 1, 1))
             
-        bpy.context.object.modifiers["Array"].curve = bpy.data.objects["BezierCurve"]
-        
-
 
 class Obstacle:
     
@@ -171,11 +169,13 @@ class Obstacle:
 if __name__ == '__main__':
     segs = list()
     #segs.append(Obstacle((0, 0),(1, 1)))
-    segs.append(Droite((0, 0), (5, 5)))
-    segs.append(Droite((5, 5), (6, 2)))
-    segs.append(Obstacle((6, 2),(7, 1)))
+    #segs.append(Droite((0, 0), (5, 5)))
+    #segs.append(Droite((5, 5), (6, 2)))
+    #segs.append(Obstacle((6, 2),(7, 1)))
     #segs.append(Droite((0, 0), (5, 5)))
     #segs.append(Courbe((10, 5), 5, math.pi, math.pi * 2))
+    segs.append(Droite((0, 0), (5, 2)))
+    segs.append(Courbe((2, 5), 5, math.pi*7/4, 7))
     
     t = Trajectoire(segs, 20, 20)
     t.show()
