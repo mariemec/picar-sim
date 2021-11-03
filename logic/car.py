@@ -5,13 +5,16 @@ from position import Position
 
 
 class Car:
-    speed_factor = 0
     car_obj = None
+    acceleration = 0
 
-    def __init__(self, _map, x=0, y=0, orientation=0, v_max=0.1, refresh_rate=24):
+    def __init__(self, _map, x=0, y=0, orientation=0, speed_factor=0, v_max=0.1, refresh_rate=24):
         self.position = Position(x, y)
         self.orientation = orientation
-        self.line_follower = LineFollower(self.position, _map, v_max, refresh_rate)
+        self.speed_factor = speed_factor
+        self.refresh_rate = refresh_rate
+        self.speed = (self.speed_factor / 100) / (1 / self.refresh_rate)
+        self.line_follower = LineFollower(self.position, _map, v_max, self.refresh_rate)
         self.distance_sensor = DistanceSensor(self.position)
 
     def calculate_next_pos(self):
@@ -24,7 +27,7 @@ class Car:
                 speed_factor)
 
     def blender_init(self):
-        bpy.ops.mesh.primitive_cube_add(size=1, location=(self.position.x, self.position.y, 0), rotation=(0, 0, self.orientation))
+        bpy.ops.mesh.primitive_cube_add(size=0.1, location=(self.position.x, self.position.y, 0), rotation=(0, 0, self.orientation))
         bpy.context.active_object.name = 'Car'
         self.car_obj = bpy.data.objects['Car']
 
@@ -33,6 +36,9 @@ class Car:
         self.car_obj.location[0] = self.position.x/100
         self.car_obj.location[1] = self.position.y/100
         self.car_obj.rotation_euler[2] = self.orientation
+        old_speed = self.speed
+        self.speed = (self.speed_factor / 100) / (1 / self.refresh_rate)
+        self.acceleration = (self.speed - old_speed) / (1 / self.refresh_rate)
 
 
 class LineFollower:
