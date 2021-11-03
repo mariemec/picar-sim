@@ -1,17 +1,7 @@
 # -------------------- TRAJECTOIRE --------------------
-# V_0
-# ---- TODO ----
-# - Curve
-# - Orientation obstacle
-# - Ajouter une condition pour éviter les division par zéro dans les slopes
-# - Refactoring 
-
-
-
 import numpy as np
 import math
-import bpy
-from bpy import context, data, ops
+
 
 class Trajectoire:
 
@@ -23,7 +13,6 @@ class Trajectoire:
         myMap = Map(m, n)
         for seg in segments:
             coords_to_activate = seg.generate_path()
-            seg.draw()
             myMap.activate_segment(coords_to_activate)
         return myMap
 
@@ -58,20 +47,9 @@ class Droite:
     def __init__(self, start_coord, end_coord):
         self.x_start, self.y_start = start_coord
         self.x_end, self.y_end = end_coord
-        self.deltaX = self.x_end - self.x_start
-        self.deltaY = self.y_end - self.y_start
-        self.longueur = np.sqrt( (self.x_end - self.x_start)**2 + (self.y_end - self.y_start)**2 )
-    
-    def slope(self):
-        slope = (self.y_end - self.y_start) / (self.x_end - self.x_start)
-        return slope
-    
-    def angle(self):
-        angle = np.arctan(self.slope())
-        return angle
 
     def generate_path(self):
-        slope = self.slope()
+        slope = (self.y_end - self.y_start) / (self.x_end - self.x_start)  # slope of segment
         b = self.y_start - self.x_start * slope
 
         path_coords = list()
@@ -80,16 +58,6 @@ class Droite:
             path_coords.append((x, int(y)))
 
         return path_coords
-    
-    def draw(self):
-        
-        bpy.ops.mesh.primitive_plane_add(size=1.0, calc_uvs=True, enter_editmode=False, 
-            align='WORLD', location=(self.x_start+self.deltaX/2, self.y_start+self.deltaY/2, 0.0), 
-            rotation=(0.0, 0.0, self.angle()), scale=(1.0, 1.0, 1.0))
-        
-        bpy.context.active_object.dimensions = (self.longueur, 0.18, 0)
-        
-
 
 
 class Courbe:
@@ -99,9 +67,6 @@ class Courbe:
         self.radius = radius
         self.start_angle = start_angle
         self.end_angle = end_angle
-        #self.deltaX = self.x_end - self.x_start
-        #self.deltaY = self.y_end - self.y_start
-        #self.longueur = np.sqrt( (self.x_end - self.x_start)**2 + (self.y_end - self.y_start)**2 )
 
     def generate_path(self):
         path_coords = list()
@@ -114,69 +79,12 @@ class Courbe:
             path_coords.append((self.center_x + int(x), self.center_y + int(y)))
 
         return path_coords
-    
-    def draw(self):
-        bpy.ops.mesh.primitive_plane_add(size=1.0, calc_uvs=True, enter_editmode=False, 
-            align='WORLD', location=(0, 0, 0.0), 
-            rotation=(0.0, 0.0, 0.0), scale=(1.0, 1.0, 1.0))
-        
-        bpy.context.active_object.dimensions = (1, 0.18, 0)
-        
-        bpy.ops.object.modifier_add(type='ARRAY')
-        bpy.context.object.modifiers["Array"].fit_type = 'FIT_CURVE'
-        
-        bpy.ops.curve.primitive_bezier_curve_add(radius=2.0, enter_editmode=False, align='WORLD', 
-            location=(0.0, 0.0, 0.0), scale=(1, 1, 1))
-            
-        bpy.context.object.modifiers["Array"].curve = bpy.data.objects["BezierCurve"]
-        
 
-
-class Obstacle:
-    
-    def __init__(self, start_coord, end_coord):
-        self.x_start, self.y_start = start_coord
-        self.x_end, self.y_end = end_coord
-        self.deltaX = self.x_end - self.x_start
-        self.deltaY = self.y_end - self.y_start
-        self.longueur = np.sqrt( (self.x_end - self.x_start)**2 + (self.y_end - self.y_start)**2 )
-        self.size = 1.0
-    
-    def slope(self):
-        slope = (self.y_end - self.y_start) / (self.x_end - self.x_start)
-        return slope
-    
-    def angle(self):
-        angle = np.arctan(self.slope())
-        return angle
-        
-    def generate_path(self):
-        slope = (self.y_end - self.y_start) / (self.x_end - self.x_start)  # slope of segment
-        b = self.y_start - self.x_start * slope
-        
-        path_coords = list()
-        for x in range(self.x_start, self.x_end + 1, 1):
-            y = slope * x + b
-            path_coords.append((x, int(y)))
-
-        return path_coords
-    
-    def draw(self):
-        bpy.ops.mesh.primitive_cube_add(size=self.size, calc_uvs=True, enter_editmode=False, 
-        align='WORLD', location=(self.x_start+self.deltaX/2, self.y_start+self.deltaY/2, self.size/2), 
-        rotation=(0.0, 0.0, self.angle()), scale=(1.0, 1.0, 1.0))
-    
-    
 
 if __name__ == '__main__':
     segs = list()
-    #segs.append(Obstacle((0, 0),(1, 1)))
     segs.append(Droite((0, 0), (5, 5)))
-    segs.append(Droite((5, 5), (6, 2)))
-    segs.append(Obstacle((6, 2),(7, 1)))
-    #segs.append(Droite((0, 0), (5, 5)))
-    #segs.append(Courbe((10, 5), 5, math.pi, math.pi * 2))
-    
+    segs.append(Courbe((10, 5), 5, math.pi, math.pi * 2))
     t = Trajectoire(segs, 20, 20)
     t.show()
 
