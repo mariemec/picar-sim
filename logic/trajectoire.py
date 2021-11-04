@@ -78,7 +78,6 @@ class Droite:
         for x in range(self.x_start, self.x_end + 1, 1):
             y = slope * x + b
             path_coords.append((x, int(y)))
-
         return path_coords
     
     def draw(self):
@@ -103,7 +102,7 @@ class Courbe:
         #self.deltaY = self.y_end - self.y_start
         #self.longueur = np.sqrt( (self.x_end - self.x_start)**2 + (self.y_end - self.y_start)**2 )
 
-    def generate_path(self):
+    def generate_path(self, float=0):
         path_coords = list()
         if self.start_angle > self.end_angle:
             raise ValueError('Start angle of curve must be smaller than end angle')
@@ -111,16 +110,16 @@ class Courbe:
         for theta in np.arange(self.start_angle, self.end_angle, 0.1):
             x = self.radius * math.cos(theta)
             y = self.radius * math.sin(theta)
-            path_coords.append((self.center_x + int(x), self.center_y + int(y)))
+            if float == 0:
+                path_coords.append((self.center_x + int(x), self.center_y + int(y)))
         
-        print(path_coords)
+            else:
+                path_coords.append((self.center_x + x, self.center_y + y))
+                
         return path_coords
-    
+    # [(0,0),(0,0)]
     def draw(self):
-        path_coords = self.generate_path()
-        print('draw')
-        print(path_coords)
-        print(path_coords[1][1])
+        path_coords = self.generate_path(1)
         
         for i, c in enumerate(path_coords):
             print(i)
@@ -174,8 +173,13 @@ if __name__ == '__main__':
     #segs.append(Obstacle((6, 2),(7, 1)))
     #segs.append(Droite((0, 0), (5, 5)))
     #segs.append(Courbe((10, 5), 5, math.pi, math.pi * 2))
-    segs.append(Droite((0, 0), (5, 2)))
-    segs.append(Courbe((2, 5), 5, math.pi*7/4, 7))
+    segs.append(Droite((0, 0), (5, 0)))
+    segs.append(Courbe((5, 5), 5, math.pi*3/2, math.pi*7/4))
+    segs.append(Droite((8, 1), (14, 7)))
+    segs.append(Courbe((12, 9), 3 ,math.pi*7/4, math.pi/2+2*math.pi))
+    segs.append(Droite((12, 12), (4, 12)))
+    segs.append(Courbe((4, 11), 1 , math.pi/2, math.pi*3/2))
+    segs.append(Droite((4, 10), (8, 10)))
     
     t = Trajectoire(segs, 20, 20)
     t.show()
