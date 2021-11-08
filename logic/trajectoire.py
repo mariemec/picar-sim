@@ -41,7 +41,7 @@ class Map:
 
     def activate_segment(self, coords_to_activate):
         for x, y in coords_to_activate:
-            self._map[x][y] = 1
+            self._map[int(x)][int(y)] = 1
 
     def peek(self, x, y):
         return self._map[x][y]
@@ -63,7 +63,10 @@ class Droite:
         self.longueur = np.sqrt( (self.x_end - self.x_start)**2 + (self.y_end - self.y_start)**2 )
     
     def slope(self):
-        slope = (self.y_end - self.y_start) / (self.x_end - self.x_start)
+        if self.x_end != self.x_start:
+            slope = (self.y_end - self.y_start) / (self.x_end - self.x_start)
+        else:
+            slope = 0
         return slope
     
     def angle(self):
@@ -117,16 +120,31 @@ class Courbe:
                 path_coords.append((self.center_x + x, self.center_y + y))
                 
         return path_coords
-    # [(0,0),(0,0)]
+
     def draw(self):
         path_coords = self.generate_path(1)
+        x1 = 0
+        x2 = 0
+        y1 = 0
+        y2 = 0
         
         for i, c in enumerate(path_coords):
             print(i)
-            #print(c[0])
+            if c != (path_coords[-1]):
+                x1 = path_coords[i][0]
+                x2 = path_coords[i+1][0]
+                y1 = path_coords[i][1]
+                y2 = path_coords[i+1][1]
+            
+            longueur = np.sqrt( (x2 - x1)**2 + (y2 - y1)**2 )
+            slope = (y2 - y1) / (x2 - x1)
+            angle = np.arctan(slope)
+            
             bpy.ops.mesh.primitive_plane_add(size=0.5, calc_uvs=True, enter_editmode=False, 
             align='WORLD', location=(c[0], c[1], 0.0), 
-            rotation=(0.0, 0.0, 0.0), scale=(1.0, 1.0, 1.0))
+            rotation=(0.0, 0.0, angle), scale=(1.0, 1.0, 1.0))
+            
+            bpy.context.active_object.dimensions = (longueur, 0.18, 0)
             
 
 class Obstacle:
@@ -176,7 +194,7 @@ if __name__ == '__main__':
     segs.append(Droite((0, 0), (5, 0)))
     segs.append(Courbe((5, 5), 5, math.pi*3/2, math.pi*7/4))
     segs.append(Droite((8, 1), (14, 7)))
-    segs.append(Courbe((12, 9), 3 ,math.pi*7/4, math.pi/2+2*math.pi))
+    segs.append(Courbe((11.7, 9), 3 ,math.pi*7/4, math.pi/2+2*math.pi))
     segs.append(Droite((12, 12), (4, 12)))
     segs.append(Courbe((4, 11), 1 , math.pi/2, math.pi*3/2))
     segs.append(Droite((4, 10), (8, 10)))
