@@ -1,9 +1,7 @@
 # -------------------- TRAJECTOIRE --------------------
 # V_0
 # ---- TODO ----
-# - Curve
 # - Orientation obstacle
-# - Ajouter une condition pour éviter les division par zéro dans les slopes
 # - Refactoring 
 
 
@@ -66,7 +64,7 @@ class Droite:
         if self.x_end != self.x_start:
             slope = (self.y_end - self.y_start) / (self.x_end - self.x_start)
         else:
-            slope = 0
+            slope = 1000
         return slope
     
     def angle(self):
@@ -186,7 +184,7 @@ class Obstacle:
 if __name__ == '__main__':
     segs = list()
     #segs.append(Obstacle((0, 0),(1, 1)))
-    #segs.append(Droite((0, 0), (5, 5)))
+    segs.append(Droite((0, 0), (0, 5)))
     #segs.append(Droite((5, 5), (6, 2)))
     #segs.append(Obstacle((6, 2),(7, 1)))
     #segs.append(Droite((0, 0), (5, 5)))
