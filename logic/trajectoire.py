@@ -165,7 +165,7 @@ class Obstacle:
     
 if __name__ == '__main__':
     segs = list()
-    
+    print('fail')
     segs.append(Droite((0, 0), (10, 0)))
     #segs.append(Droite((0, 0), (10, 0)))
     #segs.append(Courbe((10, 12), 12, math.pi*3/2, math.pi*8/4))
