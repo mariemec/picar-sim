@@ -43,31 +43,77 @@ class Bille:
 
     # CODE BELOW ONLY WORKS IN BLENDER - UNCOMMENT PLZ
     # def blender_init(self):
-    #     bpy.ops.mesh.primitive_uv_sphere_add(radius=0.016, enter_editmode=False, align='WORLD', location=(0, 0, 0),
-    #                                          scale=(1, 1, 1))
-    #     bpy.context.active_object.name = 'bille'
-    #     self._bille = myobj = bpy.data.objects['bille']
+    #     bpy.ops.mesh.primitive_cube_add(size=0.05, enter_editmode=False, align='WORLD', location=(0, 0, -0.005),
+    #                                     scale=(1, 1, 0.2))
+    #     bpy.context.active_object.name = 'socle'
+    #     self._socle = bpy.data.objects['socle']
     #
+    #     bpy.ops.mesh.primitive_uv_sphere_add(radius=self.radius_bille, enter_editmode=False, align='WORLD', location=(
+    #     self._socle.location.x, self.position.y,
+    #     self._socle.location.z + self._socle.dimensions[2] - 0.0015 + self.radius_bille), scale=(1, 1, 1))
+    #     bpy.context.active_object.name = 'bille'
+    #     self._bille = bpy.data.objects['bille']
+    #
+    #     self._bille.parent = self._socle
+
     # def blender_update(self, x, y):
     #     self.position.x = x
     #     self.position.y = y
     #     self._bille.location.x = x
     #     self._bille.location.y = y
 
+
 # Example
 # my_bille = Bille()
 # my_bille.blender_init()
 # my_bille._bille.animation_data_clear()
-# total_time = 2*math.pi # Animation should be 2*pi seconds long
-# fps = 24 # Frames per second (fps)
-# bpy.context.scene.frame_start = 0
-# bpy.context.scene.frame_end = int(total_time*fps)+1
-# keyframe_freq = 10
-# nlast = bpy.context.scene.frame_end
-
-# for n in range(nlast):
-#     t = total_time*n/nlast
+# my_bille._socle.animation_data_clear()
 #
-#     if n%keyframe_freq == 0:
+# total_time = 2  # Animation should be 2*pi seconds long
+# fps = 24  # Frames per second (fps)
+# bpy.context.scene.frame_start = 0
+# bpy.context.scene.frame_end = int(total_time * fps) + 1
+# keyframe_freq = 5
+# nlast = bpy.context.scene.frame_end
+#
+# a = 1.37
+# dt = 1 / fps
+# theta_init = 0
+# omega_init = 0
+# t_relatif = 0
+# s_t = np.array([])
+# w_t = np.array([])
+# x_0 = 0
+# v_0 = 0
+#
+# for n in range(nlast):
+#     t = total_time * n / nlast
+#
+#     if n % keyframe_freq == 0:
 #         bpy.context.scene.frame_set(n)
-#         my_bille.blender_update(0.1*math.sin(t), 0)
+#         if n == 10:
+#             theta_init = s_t[-1]
+#             omega_init = w_t[-1]
+#             t_relatif = 1 / fps
+#             x_0 = x_0 + my_bille.position.x
+#             v_0 = v_0 + a * t
+#             a = 0
+#         if n == 40:
+#             theta_init = s_t[-1]
+#             omega_init = w_t[-1]
+#             t_relatif = 1 / fps
+#             x_0 = x_0 + my_bille.position.x
+#             v_0 = v_0 + a * t
+#             a = -1.37
+#
+#         theta = my_bille.calculate_next_theta(t_relatif, a, theta_init, omega_init, 1)
+#         omega = my_bille.calculate_next_omega(t_relatif, a, theta_init, omega_init, 1)
+#         s_t = np.append(s_t, theta)
+#         w_t = np.append(w_t, omega)
+#
+#         next_x, next_z = my_bille.calculate_next_pos(theta)
+#         my_bille.blender_update(next_x, next_z)
+#         my_bille._bille.keyframe_insert(data_path="location")
+#         my_bille._socle.location.x = 1 / 2 * a * t ** 2 + v_0 * t + x_0
+#         my_bille._socle.keyframe_insert(data_path="location")
+#         t_relatif += 1 / fps
