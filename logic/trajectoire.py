@@ -70,14 +70,32 @@ class Droite:
         angle = np.arctan(self.slope())
         return angle
 
+    def slope(self):
+        if self.x_end != self.x_start:
+            slope = (self.y_end - self.y_start) / (self.x_end - self.x_start)
+        else:
+            slope = 1000
+        return slope
+
+    def angle(self):
+        angle = np.arctan(self.slope())
+        return angle
+
     def generate_path(self):
         slope = self.slope()
-        b = self.y_start - self.x_start * slope
-
         path_coords = list()
-        for x in range(self.x_start, self.x_end + 1, 1):
-            y = slope * x + b
-            path_coords.append((x, y))
+        if slope == 1000:
+            if self.y_start < self.y_end:
+                for i in range(self.y_start, self.y_end):
+                    path_coords.append((self.x_start, self.y_start + i))
+            else:
+                for i in range(self.y_end, self.y_start):
+                    path_coords.append((self.x_start, self.y_end + i))
+        else:
+            b = self.y_start - self.x_start * slope
+            for i, x in enumerate(range(self.x_start, self.x_end + 1, 1)):
+                y = slope * x + b
+                path_coords.append((x, y))
         return path_coords, 1
     
     def draw(self):
@@ -105,7 +123,7 @@ class Courbe:
         if self.start_angle > self.end_angle:
             raise ValueError('Start angle of curve must be smaller than end angle')
 
-        for theta in np.arange(self.start_angle, self.end_angle, 0.1):
+        for theta in np.arange(self.start_angle, self.end_angle, 0.05):
             x = self.radius * math.cos(theta)
             y = self.radius * math.sin(theta)
             if float == 0:
