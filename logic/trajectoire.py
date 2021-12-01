@@ -1,9 +1,5 @@
 # -------------------- TRAJECTOIRE --------------------
-# V_0
-# ---- TODO ----
-# - Orientation obstacle
-# - Refactoring 
-
+# V_1.0
 
 import numpy as np
 import math
@@ -86,16 +82,21 @@ class Droite:
         path_coords = list()
         if slope == 1000:
             if self.y_start < self.y_end:
-                for i in range(self.y_start, self.y_end):
+                for i in range(0, self.y_end-self.y_start):
                     path_coords.append((self.x_start, self.y_start + i))
             else:
-                for i in range(self.y_end, self.y_start):
+                for i in range(0, self.y_start-self.y_end):
                     path_coords.append((self.x_start, self.y_end + i))
         else:
             b = self.y_start - self.x_start * slope
-            for i, x in enumerate(range(self.x_start, self.x_end + 1, 1)):
-                y = slope * x + b
-                path_coords.append((x, y))
+            if self.x_start < self.x_end:
+                for i, x in enumerate(range(self.x_start, self.x_end + 1, 1)):
+                    y = slope * x + b
+                    path_coords.append((x, y))
+            else:
+                for i, x in enumerate(range(self.x_end, self.x_start + 1, 1)):
+                    y = slope * x + b
+                    path_coords.append((x, y))
         return path_coords, 1
     
     def draw(self):
@@ -182,37 +183,10 @@ class Obstacle:
    
 if __name__ == '__main__':
     segs = list()
-    
-    # Départ
-    segs.append(Droite((0, 0), (1830, 0)))
-    segs.append(Courbe((1830, 170), 170, math.pi*3/2, math.pi*5/2))
-    
-    # Zone 1
-    segs.append(Droite((1830, 340), (170, 340)))
-    # segs.append(Obstacle((1000,340), 0)
-    
-    segs.append(Courbe((170, 510), 170, math.pi*1/2, math.pi*3/2))
-    segs.append(Droite((170, 680), (510, 680)))
-    segs.append(Courbe((510, 850), 170, math.pi*3/2, math.pi*2))
-    
-    # Zone 2
-    segs.append(Droite((680, 850), (680, 1490)))
-    # segs.append(Obstacle((680,1000), 90)
-        
-    segs.append(Courbe((850, 1490), 170, math.pi*1/2, math.pi))
-    segs.append(Courbe((850, 1830), 170, math.pi*3/2, math.pi*2))
-    segs.append(Courbe((850, 1830), 170, math.pi*1/2, math.pi))
-    segs.append(Droite((1190, 2000), (1490, 2000)))
-    segs.append(Courbe((1490, 1830), 170, 0, math.pi*1/2))
-    
-    # Zone 3
-    segs.append(Droite((1660, 1830), (1660, 680)))
-    # segs.append(Obstacle((1660,1000), 90)
-    
-    # T final
-    segs.append(Droite((1560, 680), (1760, 680)))
 
-    
-    t = Trajectoire(segs, 2000, 2000)
+    # Départ
+    segs.append(Droite((0, 0), (30, 0)))
+
+    t = Trajectoire(segs, 40, 40)
     t.show()
 
