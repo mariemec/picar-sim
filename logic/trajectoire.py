@@ -169,7 +169,10 @@ class Obstacle:
         self.x, self.y = start_coord
         self.angle = angle * math.pi
         self.size = 0.01
-    
+        self.hauteur = 0.115
+        self.largeur = 0.075
+        self.profondeur = 0.064
+        
     def generate_path(self):
         path_coords = list()
         path_coords.append((self.x, self.y ))
@@ -177,17 +180,18 @@ class Obstacle:
     
     def draw(self):
         bpy.ops.mesh.primitive_cube_add(size=self.size, calc_uvs=True, enter_editmode=False, 
-        align='WORLD', location=((self.x)/100, (self.y)/100, self.size/2), 
+        align='WORLD', location=((self.x)/100, (self.y)/100, self.hauteur/2), 
         rotation=(0.0, 0.0, self.angle), scale=(1.0, 1.0, 1.0))
+        
+        bpy.context.active_object.dimensions = (self.profondeur, self.largeur, self.hauteur)
     
-    
+   
 if __name__ == '__main__':
     segs = list()
-    print('fail')
-    segs.append(Droite((0, 0), (10, 0)))
+    #segs.append(Droite((0, 0), (10, 0)))
     #segs.append(Droite((0, 0), (10, 0)))
     #segs.append(Courbe((10, 12), 12, math.pi*3/2, math.pi*8/4))
-    #segs.append(Obstacle((22, 12), 0))
+    #segs.append(Obstacle((10, 0), 0))
     #segs.append(Courbe((5, 5), 12, math.pi*3/2, math.pi*7/4))
     #segs.append(Droite((8, 1), (14, 7)))
     #segs.append(Courbe((11.7, 9), 3 ,math.pi*7/4, math.pi/2+2*math.pi))
