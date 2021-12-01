@@ -114,9 +114,6 @@ class Courbe:
         self.radius = radius
         self.start_angle = start_angle
         self.end_angle = end_angle
-        #self.deltaX = self.x_end - self.x_start
-        #self.deltaY = self.y_end - self.y_start
-        #self.longueur = np.sqrt( (self.x_end - self.x_start)**2 + (self.y_end - self.y_start)**2 )
 
     def generate_path(self, float=0):
         path_coords = list()
@@ -143,7 +140,6 @@ class Courbe:
         
         for i, c in enumerate(path_coords):
             # Division par 100 pour mettre en cm
-            print(i)
             if c != (path_coords[-1]):
                 x1 = (path_coords[i][0])/100
                 x2 = (path_coords[i+1][0])/100
@@ -153,8 +149,6 @@ class Courbe:
             longueur = np.sqrt( (x2 - x1)**2 + (y2 - y1)**2 )
             slope = (y2 - y1) / (x2 - x1)
             angle = np.arctan(slope)
-            print(c[0])
-            print(c[1])
             
             bpy.ops.mesh.primitive_plane_add(size=0.5, calc_uvs=True, enter_editmode=False, 
             align='WORLD', location=(c[0]/100, c[1]/100, 0.0), 
@@ -188,17 +182,37 @@ class Obstacle:
    
 if __name__ == '__main__':
     segs = list()
-    #segs.append(Droite((0, 0), (10, 0)))
-    #segs.append(Droite((0, 0), (10, 0)))
-    #segs.append(Courbe((10, 12), 12, math.pi*3/2, math.pi*8/4))
-    #segs.append(Obstacle((10, 0), 0))
-    #segs.append(Courbe((5, 5), 12, math.pi*3/2, math.pi*7/4))
-    #segs.append(Droite((8, 1), (14, 7)))
-    #segs.append(Courbe((11.7, 9), 3 ,math.pi*7/4, math.pi/2+2*math.pi))
-    #segs.append(Droite((12, 12), (4, 12)))
-    #segs.append(Courbe((4, 11), 1 , math.pi/2, math.pi*3/2))
-    #segs.append(Droite((4, 10), (8, 10)))
     
-    t = Trajectoire(segs, 40, 40)
+    # Départ
+    segs.append(Droite((0, 0), (1830, 0)))
+    segs.append(Courbe((1830, 170), 170, math.pi*3/2, math.pi*5/2))
+    
+    # Zone 1
+    segs.append(Droite((1830, 340), (170, 340)))
+    # segs.append(Obstacle((1000,340), 0)
+    
+    segs.append(Courbe((170, 510), 170, math.pi*1/2, math.pi*3/2))
+    segs.append(Droite((170, 680), (510, 680)))
+    segs.append(Courbe((510, 850), 170, math.pi*3/2, math.pi*2))
+    
+    # Zone 2
+    segs.append(Droite((680, 850), (680, 1490)))
+    # segs.append(Obstacle((680,1000), 90)
+        
+    segs.append(Courbe((850, 1490), 170, math.pi*1/2, math.pi))
+    segs.append(Courbe((850, 1830), 170, math.pi*3/2, math.pi*2))
+    segs.append(Courbe((850, 1830), 170, math.pi*1/2, math.pi))
+    segs.append(Droite((1190, 2000), (1490, 2000)))
+    segs.append(Courbe((1490, 1830), 170, 0, math.pi*1/2))
+    
+    # Zone 3
+    segs.append(Droite((1660, 1830), (1660, 680)))
+    # segs.append(Obstacle((1660,1000), 90)
+    
+    # T final
+    segs.append(Droite((1560, 680), (1760, 680)))
+
+    
+    t = Trajectoire(segs, 2000, 2000)
     t.show()
 
