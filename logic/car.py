@@ -1,4 +1,3 @@
-# ------------------------ CAR ------------------------
 class Car:
     car_obj = None
     suiveur_ligne_obj = []
@@ -25,10 +24,14 @@ class Car:
                 speed_factor)
 
     def blender_init(self):
-        bpy.ops.mesh.primitive_cube_add(size=0.1, location=(self.position.x, self.position.y, 0),
-                                        rotation=(0, 0, self.orientation))
-        bpy.context.active_object.name = 'Car'
-        self.car_obj = bpy.data.objects['Car']
+        try:
+            self.car_obj = bpy.data.objects['Car']
+        except:
+            bpy.ops.mesh.primitive_cube_add(size=0.1, location=(self.position.x, self.position.y, 0),
+                                            rotation=(0, 0, self.orientation), scale=(2, 1, 1))
+            bpy.context.active_object.name = 'Car'
+            self.car_obj = bpy.data.objects['Car']
+
         for i in range(5):
             bpy.ops.mesh.primitive_cube_add(size=0.01, location=(self.position.x, self.position.y + (i - 2) / 100, 0),
                                             rotation=(0, 0, 0))
@@ -94,38 +97,37 @@ class LineFollower:
         # loops through the sensors_state list to update their state
         for i in range(len(self.sensor_state)):
             if i == 2:
-                print(self._map.peek(x, y))
                 x = int(round(x2))
                 y = int(round(y2))
             else:
                 if 0 <= orientation < np.pi / 2:
                     if i == 0 or i == 1:
-                        x = int(x2 - x_offsets[i])
-                        y = int(y2 + y_offsets[i])
+                        x = int(round(x2 - x_offsets[i]))
+                        y = int(round(y2 + y_offsets[i]))
                     if i == 3 or i == 4:
-                        x = int(x2 + x_offsets[i])
-                        y = int(y2 - y_offsets[i])
+                        x = int(round(x2 + x_offsets[i]))
+                        y = int(round(y2 - y_offsets[i]))
                 elif np.pi / 2 <= orientation < np.pi:
                     if i == 0 or i == 1:
-                        x = int(x2 - x_offsets[i])
-                        y = int(y2 - y_offsets[i])
+                        x = int(round(x2 - x_offsets[i]))
+                        y = int(round(y2 - y_offsets[i]))
                     if i == 3 or i == 4:
-                        x = int(x2 + x_offsets[i])
-                        y = int(y2 + y_offsets[i])
+                        x = int(round(x2 + x_offsets[i]))
+                        y = int(round(y2 + y_offsets[i]))
                 elif np.pi <= orientation < 3 * np.pi / 2:
                     if i == 0 or i == 1:
-                        x = int(x2 + x_offsets[i])
-                        y = int(y2 - y_offsets[i])
+                        x = int(round(x2 + x_offsets[i]))
+                        y = int(round(y2 - y_offsets[i]))
                     if i == 3 or i == 4:
-                        x = int(x2 - x_offsets[i])
-                        y = int(y2 + y_offsets[i])
+                        x = int(round(x2 - x_offsets[i]))
+                        y = int(round(y2 + y_offsets[i]))
                 elif 3 * np.pi / 2 <= orientation < 2 * np.pi:
                     if i == 0 or i == 1:
-                        x = int(x2 + x_offsets[i])
-                        y = int(y2 + y_offsets[i])
+                        x = int(round(x2 + x_offsets[i]))
+                        y = int(round(y2 + y_offsets[i]))
                     if i == 3 or i == 4:
-                        x = int(x2 - x_offsets[i])
-                        y = int(y2 - y_offsets[i])
+                        x = int(round(x2 - x_offsets[i]))
+                        y = int(round(y2 - y_offsets[i]))
 
             self.sensor_state[i] = self._map.peek(x, y)
             suiveur_ligne_obj[i].location[0] = x / 100
@@ -144,11 +146,15 @@ class LineFollower:
         self.__get_state(orientation, suiveur_ligne_obj)
 
         # placeholder values, will have to fine tune them
-        small_radius = 160 / 1000
+        small_radius = 170 / 1000
         small_turn_delta_orientation = (2 * np.pi) / (
                 ((2 * np.pi * small_radius) / current_speed) / (1 / self.refresh_rate)) if current_speed > 0 else 0
 
-        big_radius = 170 / 1000
+        medium_radius = 168 / 1000
+        medium_turn_delta_orientation = (2 * np.pi) / (
+                ((2 * np.pi * medium_radius) / current_speed) / (1 / self.refresh_rate)) if current_speed > 0 else 0
+
+        big_radius = 166 / 1000
         big_turn_delta_orientation = (2 * np.pi) / (
                 ((2 * np.pi * big_radius) / current_speed) / (1 / self.refresh_rate)) if current_speed > 0 else 0
 
@@ -156,8 +162,15 @@ class LineFollower:
         print(self.sensor_state)
         if self.sensor_state[2] == 1:
             # you're good
-            orientation = orientation
-            self.last_turn_direction = None
+            if self.sensor_state[1] == 1:
+                orientation += big_turn_delta_orientation
+                current_radius = big_radius * 100
+            elif self.sensor_state[3] == 1:
+                orientation -= big_turn_delta_orientation
+                current_radius = big_radius * 100
+            else:
+                orientation = orientation
+                self.last_turn_direction = None
         elif self.sensor_state[4] == 1:
             # tourne beaucoup à gauche
             orientation -= small_turn_delta_orientation
@@ -168,14 +181,14 @@ class LineFollower:
             current_radius = small_radius * 100
         elif self.sensor_state[3] == 1:
             # tourne à gauche
-            orientation -= big_turn_delta_orientation
-            current_radius = big_radius * 100
+            orientation -= medium_turn_delta_orientation
+            current_radius = medium_radius * 100
         elif self.sensor_state[1] == 1:
             # tourne à droite
-            orientation += big_turn_delta_orientation
-            current_radius = big_radius * 100
+            orientation += medium_turn_delta_orientation
+            current_radius = medium_radius * 100
         else:
-            #         defines what to do when the line follower doesn't see anything
+            # defines what to do when the line follower doesn't see anything
             if self.last_turn_direction == 'gauche':
                 orientation -= small_turn_delta_orientation
                 current_radius = small_radius
@@ -217,13 +230,7 @@ class DistanceSensor:
             speed_factor = 0
             pass
         if self.distance > self.slowing_distance:
-            if speed_factor < 0.4:
+            if speed_factor < 1:
                 speed_factor += 0.1
 
         return round(speed_factor, 4)
-
-
-class Simulation:
-    def __init__(self, m, n, segments):
-        self.trajectoire = Trajectoire(m=m, n=n, segments=segments)
-        self.car = Car(self.trajectoire.map)

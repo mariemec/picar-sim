@@ -11,6 +11,6 @@ from PIL import Image
 
 # Use this main to generate a black and white image of the track
 if __name__ == '__main__':
-    original_array = np.loadtxt("output.txt").reshape(250, 250).astype('uint8')*255
+    original_array = np.loadtxt("output.txt").reshape(300, 300).astype('uint8')*255
     im = Image.fromarray(original_array)
     im.save('track.png')
