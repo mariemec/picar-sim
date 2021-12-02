@@ -1,9 +1,5 @@
 # -------------------- TRAJECTOIRE --------------------
-# V_0
-# ---- TODO ----
-# - Orientation obstacle
-# - Refactoring 
-
+# V_1.0
 
 import numpy as np
 import math
@@ -86,16 +82,25 @@ class Droite:
         path_coords = list()
         if slope == 1000:
             if self.y_start < self.y_end:
-                for i in range(self.y_start, self.y_end):
+                for i in range(0, self.y_end-self.y_start):
                     path_coords.append((self.x_start, self.y_start + i))
+                    path_coords.append((self.x_start + 1, self.y_start + i))
             else:
-                for i in range(self.y_end, self.y_start):
+                for i in range(0, self.y_start-self.y_end):
                     path_coords.append((self.x_start, self.y_end + i))
+                    path_coords.append((self.x_start + 1, self.y_start + i))
         else:
             b = self.y_start - self.x_start * slope
-            for i, x in enumerate(range(self.x_start, self.x_end + 1, 1)):
-                y = slope * x + b
-                path_coords.append((x, y))
+            if self.x_start < self.x_end:
+                for i, x in enumerate(range(self.x_start, self.x_end + 1, 1)):
+                    y = slope * x + b
+                    path_coords.append((x, y))
+                    path_coords.append((x, y + 1))
+            else:
+                for i, x in enumerate(range(self.x_end, self.x_start + 1, 1)):
+                    y = slope * x + b
+                    path_coords.append((x, y))
+                    path_coords.append((x, y + 1))
         return path_coords, 1
     
     def draw(self):
@@ -114,9 +119,6 @@ class Courbe:
         self.radius = radius
         self.start_angle = start_angle
         self.end_angle = end_angle
-        #self.deltaX = self.x_end - self.x_start
-        #self.deltaY = self.y_end - self.y_start
-        #self.longueur = np.sqrt( (self.x_end - self.x_start)**2 + (self.y_end - self.y_start)**2 )
 
     def generate_path(self, float=0):
         path_coords = list()
@@ -128,6 +130,7 @@ class Courbe:
             y = self.radius * math.sin(theta)
             if float == 0:
                 path_coords.append((self.center_x + int(x), self.center_y + int(y)))
+                path_coords.append((self.center_x + int(x) + 1, self.center_y + int(y)))
         
             else:
                 path_coords.append((self.center_x + x, self.center_y + y))
@@ -143,7 +146,6 @@ class Courbe:
         
         for i, c in enumerate(path_coords):
             # Division par 100 pour mettre en cm
-            print(i)
             if c != (path_coords[-1]):
                 x1 = (path_coords[i][0])/100
                 x2 = (path_coords[i+1][0])/100
@@ -153,8 +155,6 @@ class Courbe:
             longueur = np.sqrt( (x2 - x1)**2 + (y2 - y1)**2 )
             slope = (y2 - y1) / (x2 - x1)
             angle = np.arctan(slope)
-            print(c[0])
-            print(c[1])
             
             bpy.ops.mesh.primitive_plane_add(size=0.5, calc_uvs=True, enter_editmode=False, 
             align='WORLD', location=(c[0]/100, c[1]/100, 0.0), 
@@ -188,17 +188,8 @@ class Obstacle:
    
 if __name__ == '__main__':
     segs = list()
-    #segs.append(Droite((0, 0), (10, 0)))
-    #segs.append(Droite((0, 0), (10, 0)))
-    #segs.append(Courbe((10, 12), 12, math.pi*3/2, math.pi*8/4))
-    #segs.append(Obstacle((10, 0), 0))
-    #segs.append(Courbe((5, 5), 12, math.pi*3/2, math.pi*7/4))
-    #segs.append(Droite((8, 1), (14, 7)))
-    #segs.append(Courbe((11.7, 9), 3 ,math.pi*7/4, math.pi/2+2*math.pi))
-    #segs.append(Droite((12, 12), (4, 12)))
-    #segs.append(Courbe((4, 11), 1 , math.pi/2, math.pi*3/2))
-    #segs.append(Droite((4, 10), (8, 10)))
-    
-    t = Trajectoire(segs, 40, 40)
+
+
+    t = Trajectoire(segs, 200, 200)
     t.show()
 
