@@ -74,6 +74,7 @@ class Bille:
         self._bille.location.y = y
         self._bille.keyframe_insert(data_path="location")
 
+
 # -------------------- INITIAL CONDITIONS ----------
 class InitialConditions():
     def __init__(self, theta_x, theta_y, omega_x, omega_y):
