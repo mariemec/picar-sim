@@ -1,5 +1,5 @@
-import numpy as np
 from PIL import Image
+import numpy as np
 
 ## After calling the following method on sim.trajectoire.map
 # def print_map_to_file(self):

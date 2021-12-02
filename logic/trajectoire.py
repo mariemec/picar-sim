@@ -1,7 +1,5 @@
 # -------------------- TRAJECTOIRE --------------------
 # Marie a doubler les courbes 01/12/2021
-from bpy import context, data, ops
-
 class Trajectoire:
 
     def __init__(self, segments, m, n):
@@ -191,12 +189,4 @@ class Obstacle:
                                         rotation=(0.0, 0.0, self.angle), scale=(1.0, 1.0, 1.0))
 
         bpy.context.active_object.dimensions = (self.profondeur, self.largeur, self.hauteur)
-
-
-if __name__ == '__main__':
-    segs = list()
-
-
-    t = Trajectoire(segs, 200, 200)
-    t.show()
 

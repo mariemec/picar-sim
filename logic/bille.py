@@ -1,8 +1,4 @@
 # ----------------------- BILLE -----------------------
-from position import Position
-import numpy as np
-
-
 class Bille:
 
     g = 9.81
