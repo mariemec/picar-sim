@@ -1,7 +1,10 @@
 # -------------------- TRAJECTOIRE --------------------
+# V_1.0
+
 import numpy as np
 import math
-
+import bpy
+from bpy import context, data, ops
 
 class Trajectoire:
 
@@ -12,8 +15,9 @@ class Trajectoire:
     def generate_map(self, segments, m, n):
         myMap = Map(m, n)
         for seg in segments:
-            coords_to_activate = seg.generate_path()
-            myMap.activate_segment(coords_to_activate)
+            coords_to_activate, valeur = seg.generate_path()
+            seg.draw()
+            myMap.activate_segment(coords_to_activate, valeur)
         return myMap
 
     def peek(self, x, y):
@@ -28,9 +32,9 @@ class Map:
     def __init__(self, m, n):
         self._map = np.zeros(shape=(m, n), dtype=int)
 
-    def activate_segment(self, coords_to_activate):
+    def activate_segment(self, coords_to_activate, valeur):
         for x, y in coords_to_activate:
-            self._map[x][y] = 1
+            self._map[int(x)][int(y)] = valeur
 
     def peek(self, x, y):
         return self._map[x][y]
@@ -47,18 +51,66 @@ class Droite:
     def __init__(self, start_coord, end_coord):
         self.x_start, self.y_start = start_coord
         self.x_end, self.y_end = end_coord
+        self.deltaX = self.x_end - self.x_start
+        self.deltaY = self.y_end - self.y_start
+        self.longueur = (np.sqrt( (self.x_end - self.x_start)**2 + (self.y_end - self.y_start)**2 )/100)
+    
+    def slope(self):
+        if self.x_end != self.x_start:
+            slope = (self.y_end - self.y_start) / (self.x_end - self.x_start)
+        else:
+            slope = 1000
+        return slope
+    
+    def angle(self):
+        angle = np.arctan(self.slope())
+        return angle
+
+    def slope(self):
+        if self.x_end != self.x_start:
+            slope = (self.y_end - self.y_start) / (self.x_end - self.x_start)
+        else:
+            slope = 1000
+        return slope
+
+    def angle(self):
+        angle = np.arctan(self.slope())
+        return angle
 
     def generate_path(self):
-        slope = (self.y_end - self.y_start) / (self.x_end - self.x_start)  # slope of segment
-        b = self.y_start - self.x_start * slope
-
+        slope = self.slope()
         path_coords = list()
-        for x in range(self.x_start, self.x_end + 1, 1):
-            y = slope * x + b
-            path_coords.append((x, int(y)))
-
-        return path_coords
-
+        if slope == 1000:
+            if self.y_start < self.y_end:
+                for i in range(0, self.y_end-self.y_start):
+                    path_coords.append((self.x_start, self.y_start + i))
+                    path_coords.append((self.x_start + 1, self.y_start + i))
+            else:
+                for i in range(0, self.y_start-self.y_end):
+                    path_coords.append((self.x_start, self.y_end + i))
+                    path_coords.append((self.x_start + 1, self.y_start + i))
+        else:
+            b = self.y_start - self.x_start * slope
+            if self.x_start < self.x_end:
+                for i, x in enumerate(range(self.x_start, self.x_end + 1, 1)):
+                    y = slope * x + b
+                    path_coords.append((x, y))
+                    path_coords.append((x, y + 1))
+            else:
+                for i, x in enumerate(range(self.x_end, self.x_start + 1, 1)):
+                    y = slope * x + b
+                    path_coords.append((x, y))
+                    path_coords.append((x, y + 1))
+        return path_coords, 1
+    
+    def draw(self):
+        # Division par 100 pour mettre en cm
+        bpy.ops.mesh.primitive_plane_add(size=1.0, calc_uvs=True, enter_editmode=False, 
+            align='WORLD', location=((self.x_start+self.deltaX/2)/100, (self.y_start+self.deltaY/2)/100, 0.0), 
+            rotation=(0.0, 0.0, self.angle()), scale=(1.0, 1.0, 1.0))
+        
+        bpy.context.active_object.dimensions = (self.longueur, 0.018, 0)
+        
 
 class Courbe:
 
@@ -68,23 +120,76 @@ class Courbe:
         self.start_angle = start_angle
         self.end_angle = end_angle
 
-    def generate_path(self):
+    def generate_path(self, float=0):
         path_coords = list()
         if self.start_angle > self.end_angle:
             raise ValueError('Start angle of curve must be smaller than end angle')
 
-        for theta in np.arange(self.start_angle, self.end_angle, 0.1):
+        for theta in np.arange(self.start_angle, self.end_angle, 0.05):
             x = self.radius * math.cos(theta)
             y = self.radius * math.sin(theta)
-            path_coords.append((self.center_x + int(x), self.center_y + int(y)))
+            if float == 0:
+                path_coords.append((self.center_x + int(x), self.center_y + int(y)))
+                path_coords.append((self.center_x + int(x) + 1, self.center_y + int(y)))
+        
+            else:
+                path_coords.append((self.center_x + x, self.center_y + y))
+                
+        return path_coords, 1
 
-        return path_coords
+    def draw(self):
+        path_coords = self.generate_path(1)[0]
+        x1 = 0
+        x2 = 0
+        y1 = 0
+        y2 = 0
+        
+        for i, c in enumerate(path_coords):
+            # Division par 100 pour mettre en cm
+            if c != (path_coords[-1]):
+                x1 = (path_coords[i][0])/100
+                x2 = (path_coords[i+1][0])/100
+                y1 = (path_coords[i][1])/100
+                y2 = (path_coords[i+1][1])/100
+            
+            longueur = np.sqrt( (x2 - x1)**2 + (y2 - y1)**2 )
+            slope = (y2 - y1) / (x2 - x1)
+            angle = np.arctan(slope)
+            
+            bpy.ops.mesh.primitive_plane_add(size=0.5, calc_uvs=True, enter_editmode=False, 
+            align='WORLD', location=(c[0]/100, c[1]/100, 0.0), 
+            rotation=(0.0, 0.0, angle), scale=(1.0, 1.0, 1.0))
+            
+            bpy.context.active_object.dimensions = (longueur, 0.018, 0)
+            
 
-
+class Obstacle:
+    
+    def __init__(self, start_coord, angle):
+        self.x, self.y = start_coord
+        self.angle = angle * math.pi
+        self.size = 0.01
+        self.hauteur = 0.115
+        self.largeur = 0.075
+        self.profondeur = 0.064
+        
+    def generate_path(self):
+        path_coords = list()
+        path_coords.append((self.x, self.y ))
+        return path_coords, 2
+    
+    def draw(self):
+        bpy.ops.mesh.primitive_cube_add(size=self.size, calc_uvs=True, enter_editmode=False, 
+        align='WORLD', location=((self.x)/100, (self.y)/100, self.hauteur/2), 
+        rotation=(0.0, 0.0, self.angle), scale=(1.0, 1.0, 1.0))
+        
+        bpy.context.active_object.dimensions = (self.profondeur, self.largeur, self.hauteur)
+    
+   
 if __name__ == '__main__':
     segs = list()
-    segs.append(Droite((0, 0), (5, 5)))
-    segs.append(Courbe((10, 5), 5, math.pi, math.pi * 2))
-    t = Trajectoire(segs, 20, 20)
+
+
+    t = Trajectoire(segs, 200, 200)
     t.show()
 
