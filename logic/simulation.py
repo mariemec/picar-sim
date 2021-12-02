@@ -1,6 +1,4 @@
-from trajectoire import *
-from car import Car
-
+# ----------------------- SIMULATION -----------------------
 
 class Simulation:
     def __init__(self, m, n, segments):

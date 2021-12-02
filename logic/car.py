@@ -1,3 +1,4 @@
+# ----------------------- CAR -----------------------
 class Car:
     car_obj = None
     suiveur_ligne_obj = []
@@ -55,7 +56,8 @@ class LineFollower:
     >> update_orientation will return an updated orientation based on the line follower sensors state.
     """
     sensor_state = [0] * 5
-    last_turn_direction = None
+    sample_count = 0
+    last_sensor = None
 
     def __init__(self, position, _map, refresh_rate):
         self.position = position
@@ -79,6 +81,7 @@ class LineFollower:
             phi = -orientation
         else:
             print('orientation is fucked')
+            print(orientation)
 
         x0 = 4 * np.sin(phi)
         x1 = 2 * np.sin(phi)
@@ -140,71 +143,34 @@ class LineFollower:
         :param orientation: current car orientation
         :return: new car orientation
         """
-        temp = orientation
         current_radius = 0
-        # get current sensors state
         self.__get_state(orientation, suiveur_ligne_obj)
 
-        # placeholder values, will have to fine tune them
-        small_radius = 170 / 1000
-        small_turn_delta_orientation = (2 * np.pi) / (
-                ((2 * np.pi * small_radius) / current_speed) / (1 / self.refresh_rate)) if current_speed > 0 else 0
+        if self.sensor_state[2] != 1:
+            self.sample_count += 1
+            print(
+                f'last_sensor: {self.last_sensor} | sensor_state: {self.sensor_state} | sample_count: {self.sample_count}')
+            if 1 in self.sensor_state or self.last_sensor is not None:
+                adjacent_dist = (19 * self.sample_count) * (1 / self.refresh_rate) * (current_speed * 100)
+                print(f'distance adj: {adjacent_dist} | theta: {np.arctan(2 / adjacent_dist)}')
+                if self.sensor_state[1]:
+                    orientation += np.arctan(2 / adjacent_dist)
+                    self.sample_count = 0
+                elif self.sensor_state[3]:
+                    orientation -= np.arctan(2 / adjacent_dist)
+                    self.sample_count = 0
+                elif self.sensor_state[0]:
+                    orientation += np.arctan(4 / adjacent_dist)
+                    self.sample_count = 0
+                elif self.sensor_state[4]:
+                    orientation -= np.arctan(4 / adjacent_dist)
+                    self.sample_count = 0
+            self.last_sensor = self.sensor_state.index(1) if 1 in self.sensor_state else None
 
-        medium_radius = 168 / 1000
-        medium_turn_delta_orientation = (2 * np.pi) / (
-                ((2 * np.pi * medium_radius) / current_speed) / (1 / self.refresh_rate)) if current_speed > 0 else 0
-
-        big_radius = 166 / 1000
-        big_turn_delta_orientation = (2 * np.pi) / (
-                ((2 * np.pi * big_radius) / current_speed) / (1 / self.refresh_rate)) if current_speed > 0 else 0
-
-        # depending on which sensor is on, the orientation is going to be updated
-        print(self.sensor_state)
-        if self.sensor_state[2] == 1:
-            # you're good
-            if self.sensor_state[1] == 1:
-                orientation += big_turn_delta_orientation
-                current_radius = big_radius * 100
-            elif self.sensor_state[3] == 1:
-                orientation -= big_turn_delta_orientation
-                current_radius = big_radius * 100
-            else:
-                orientation = orientation
-                self.last_turn_direction = None
-        elif self.sensor_state[4] == 1:
-            # tourne beaucoup à gauche
-            orientation -= small_turn_delta_orientation
-            current_radius = small_radius * 100
-        elif self.sensor_state[0] == 1:
-            # tourne beaucoup à droite
-            orientation += small_turn_delta_orientation
-            current_radius = small_radius * 100
-        elif self.sensor_state[3] == 1:
-            # tourne à gauche
-            orientation -= medium_turn_delta_orientation
-            current_radius = medium_radius * 100
-        elif self.sensor_state[1] == 1:
-            # tourne à droite
-            orientation += medium_turn_delta_orientation
-            current_radius = medium_radius * 100
-        else:
-            # defines what to do when the line follower doesn't see anything
-            if self.last_turn_direction == 'gauche':
-                orientation -= small_turn_delta_orientation
-                current_radius = small_radius
-            elif self.last_turn_direction == 'droite':
-                orientation += small_turn_delta_orientation
-                current_radius = small_radius
-
-        if orientation > 2 * np.pi:
+        if round(orientation, 4) > 2 * np.pi:
             orientation -= 2 * np.pi
-        if orientation < 0:
+        if round(orientation, 4) < 0:
             orientation += 2 * np.pi
-
-        if temp > orientation:
-            self.last_turn_direction = 'gauche'
-        elif temp < orientation:
-            self.last_turn_direction = 'droite'
 
         return round(orientation, 4), current_radius
 
