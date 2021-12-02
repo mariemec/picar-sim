@@ -84,19 +84,23 @@ class Droite:
             if self.y_start < self.y_end:
                 for i in range(0, self.y_end-self.y_start):
                     path_coords.append((self.x_start, self.y_start + i))
+                    path_coords.append((self.x_start + 1, self.y_start + i))
             else:
                 for i in range(0, self.y_start-self.y_end):
                     path_coords.append((self.x_start, self.y_end + i))
+                    path_coords.append((self.x_start + 1, self.y_start + i))
         else:
             b = self.y_start - self.x_start * slope
             if self.x_start < self.x_end:
                 for i, x in enumerate(range(self.x_start, self.x_end + 1, 1)):
                     y = slope * x + b
                     path_coords.append((x, y))
+                    path_coords.append((x, y + 1))
             else:
                 for i, x in enumerate(range(self.x_end, self.x_start + 1, 1)):
                     y = slope * x + b
                     path_coords.append((x, y))
+                    path_coords.append((x, y + 1))
         return path_coords, 1
     
     def draw(self):
@@ -126,6 +130,7 @@ class Courbe:
             y = self.radius * math.sin(theta)
             if float == 0:
                 path_coords.append((self.center_x + int(x), self.center_y + int(y)))
+                path_coords.append((self.center_x + int(x) + 1, self.center_y + int(y)))
         
             else:
                 path_coords.append((self.center_x + x, self.center_y + y))
@@ -184,9 +189,7 @@ class Obstacle:
 if __name__ == '__main__':
     segs = list()
 
-    # Départ
-    segs.append(Droite((0, 0), (30, 0)))
 
-    t = Trajectoire(segs, 40, 40)
+    t = Trajectoire(segs, 200, 200)
     t.show()
 
