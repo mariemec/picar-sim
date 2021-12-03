@@ -77,10 +77,11 @@ class LineFollower:
     sensor_state = [0] * 5
     last_sensor = None
 
-    def __init__(self, position, _map, refresh_rate):
+    def __init__(self, position, _map, refresh_rate, position_offset=0):
         self.position = position
         self._map = _map
         self.refresh_rate = refresh_rate
+        self.position_offset = position_offset
 
     def __get_state(self, orientation, suiveur_ligne_obj):
         """
