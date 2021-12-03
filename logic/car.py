@@ -15,9 +15,25 @@ class Car:
         self.distance_sensor = DistanceSensor(self.position)
 
     def calculate_next_pos(self):
-        orientation, self.current_radius = self.line_follower.update_orientation(self.orientation, self.speed,
-                                                                                 self.suiveur_ligne_obj)
+        orientation = self.line_follower.update_orientation(self.orientation, self.speed, self.suiveur_ligne_obj)
         speed_factor = self.distance_sensor.update_speed_factor(self.speed_factor)
+
+        x1 = self.position.x
+        x2 = self.position.x + speed_factor * np.cos(orientation)
+        y1 = self.position.y
+        y2 = self.position.y + speed_factor * np.sin(orientation)
+
+        delta_s = np.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2)
+        delta_theta = np.abs(self.orientation - orientation)
+
+        if orientation > 2 * np.pi:
+            orientation -= 2 * np.pi
+        if orientation < 0:
+            orientation += 2 * np.pi
+
+        self.current_radius = (delta_s / delta_theta) / 100
+
+        print(f'radius: {self.current_radius}')
 
         return (self.position.x + speed_factor * np.cos(orientation),
                 self.position.y + speed_factor * np.sin(orientation),
@@ -56,7 +72,6 @@ class LineFollower:
     >> update_orientation will return an updated orientation based on the line follower sensors state.
     """
     sensor_state = [0] * 5
-    sample_count = 0
     last_sensor = None
 
     def __init__(self, position, _map, refresh_rate):
@@ -143,36 +158,32 @@ class LineFollower:
         :param orientation: current car orientation
         :return: new car orientation
         """
-        current_radius = 0
         self.__get_state(orientation, suiveur_ligne_obj)
 
+        print(f'sensor_state: {self.sensor_state} | last_sensor: {self.last_sensor}')
         if self.sensor_state[2] != 1:
-            self.sample_count += 1
-            print(
-                f'last_sensor: {self.last_sensor} | sensor_state: {self.sensor_state} | sample_count: {self.sample_count}')
-            if 1 in self.sensor_state or self.last_sensor is not None:
-                adjacent_dist = (19 * self.sample_count) * (1 / self.refresh_rate) * (current_speed * 100)
-                print(f'distance adj: {adjacent_dist} | theta: {np.arctan(2 / adjacent_dist)}')
+            if 1 in self.sensor_state:
+                adjacent_dist = 19 * (1 / self.refresh_rate) * (current_speed * 100)
                 if self.sensor_state[1]:
                     orientation += np.arctan(2 / adjacent_dist)
-                    self.sample_count = 0
                 elif self.sensor_state[3]:
                     orientation -= np.arctan(2 / adjacent_dist)
-                    self.sample_count = 0
                 elif self.sensor_state[0]:
                     orientation += np.arctan(4 / adjacent_dist)
-                    self.sample_count = 0
                 elif self.sensor_state[4]:
                     orientation -= np.arctan(4 / adjacent_dist)
-                    self.sample_count = 0
-            self.last_sensor = self.sensor_state.index(1) if 1 in self.sensor_state else None
+        elif self.sensor_state[2] == 1:
+            adjacent_dist = 19 * (1 / self.refresh_rate) * (current_speed * 100)
+            if self.last_sensor == 1:
+                orientation -= np.arctan(2 / adjacent_dist) / 2
+            elif self.last_sensor == 3:
+                orientation += np.arctan(2 / adjacent_dist) / 2
+        try:
+            self.last_sensor = self.sensor_state.index(1)
+        except:
+            pass
 
-        if round(orientation, 4) > 2 * np.pi:
-            orientation -= 2 * np.pi
-        if round(orientation, 4) < 0:
-            orientation += 2 * np.pi
-
-        return round(orientation, 4), current_radius
+        return round(orientation, 4)
 
 
 class DistanceSensor:
@@ -196,7 +207,7 @@ class DistanceSensor:
             speed_factor = 0
             pass
         if self.distance > self.slowing_distance:
-            if speed_factor < 1:
+            if speed_factor < 0.91666:
                 speed_factor += 0.1
 
         return round(speed_factor, 4)

@@ -76,9 +76,9 @@ class Simulation:
 #     a = car.acceleration
 #     v = car.speed
 #     radius = car.current_radius
-#     if radius != 0:
+#     if radius != 0 and radius<100:
 #         # Car is turning
-#         a_centripetal = (v * v) / 0.17
+#         a_centripetal = (v * v) / radius
 #         a_x = a_centripetal * np.cos(car.orientation)
 #         a_y = a_centripetal * np.sin(car.orientation)
 #     else:
@@ -113,5 +113,4 @@ class Simulation:
 #     print(
 #         f'n={i}\torientation={np.rad2deg(car.orientation)}\tradius={car.current_radius}\tv={car.speed:.2f}m/s\tax={a_x}\tay={a_y}\ttheta_x={np.rad2deg(theta_x):.2f}\tthta_y={np.rad2deg(theta_y):.2f}')
 #     t_relatif += 1 / fps
-#
 
