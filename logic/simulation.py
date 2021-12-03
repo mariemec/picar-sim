@@ -7,7 +7,7 @@ class Simulation:
 
 ##MAIN CODE
 # m, n = 300, 300
-# nb_frame = 870
+# nb_frame = 250
 # bpy.context.scene.frame_end = nb_frame
 # fps = 24
 # segs = []
@@ -58,11 +58,11 @@ class Simulation:
 # car.blender_init()
 #
 # # Test 2 -> cercle
-# segs.append(Courbe((13.8, 13.8), 13.8, 0, math.pi * 2))
+# segs.append(Courbe((17, 17), 17, 0, math.pi * 2))
 # sim = Simulation(m, n, segs)
 # sim.trajectoire.map.print_map_to_file()
 # car = sim.car
-# car.position.x = 0.138
+# car.position.x = 0
 # car.position.y = 0
 # car.blender_init()
 #
@@ -81,11 +81,11 @@ class Simulation:
 # sim = Simulation(m, n, segs)
 # sim.trajectoire.map.print_map_to_file()
 # car = sim.car
-# car.position.x = 0.12
+# car.position.x = 0
 # car.position.y = 0
 # car.blender_init()
 #
-# # Test 5 -> ligne droite en reculant
+# # Test 5 -> ligne droite en reculant ***** changer speed factor + accel
 # segs.append(Droite((0, 0), (200, 0)))
 # sim = Simulation(m, n, segs)
 # sim.trajectoire.map.print_map_to_file()
@@ -105,12 +105,12 @@ class Simulation:
 # car.blender_init()
 #
 # # Test 7 -> Cercle avec obstacle
-# segs.append(Courbe((13.8, 13.8), 13.8, 0, math.pi * 2))
-# segs.append(Obstacle((27.6,13.8), 90))
+# segs.append(Courbe((17, 17), 17, 0, math.pi * 2))
+# segs.append(Obstacle((34,17), 90))
 # sim = Simulation(m, n, segs)
 # sim.trajectoire.map.print_map_to_file()
 # car = sim.car
-# car.position.x = 13.8
+# car.position.x = 0
 # car.position.y = 0
 # car.blender_init()
 #
@@ -120,7 +120,7 @@ class Simulation:
 # sim = Simulation(m, n, segs)
 # sim.trajectoire.map.print_map_to_file()
 # car = sim.car
-# car.position.x = 12
+# car.position.x = 0
 # car.position.y = 0
 # car.blender_init()
 #
@@ -134,7 +134,7 @@ class Simulation:
 # car.position.x = 0
 # car.position.y = 0
 # car.blender_init()
-
+#
 # my_bille = Bille()
 # my_bille.blender_init()
 # my_bille._socle.parent = car.car_obj
