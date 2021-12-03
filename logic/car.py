@@ -5,18 +5,18 @@ class Car:
     acceleration = 0
     current_radius = 0
 
-    def __init__(self, _map, x=0, y=0, orientation=0, speed_factor=0, refresh_rate=24):
+    def __init__(self, map, x=0, y=0, orientation=0, speed_factor=0, refresh_rate=24):
         self.position = Position(x, y)
         self.orientation = orientation
         self.speed_factor = speed_factor
         self.refresh_rate = refresh_rate
         self.speed = (self.speed_factor / 100) / (1 / self.refresh_rate)
-        self.line_follower = LineFollower(self.position, _map, self.refresh_rate)
-        self.distance_sensor = DistanceSensor(self.position)
+        self.line_follower = LineFollower(self.position, map, self.refresh_rate)
+        self.distance_sensor = DistanceSensor(self.position, map._map)
 
     def calculate_next_pos(self):
         orientation = self.line_follower.update_orientation(self.orientation, self.speed, self.suiveur_ligne_obj)
-        speed_factor = self.distance_sensor.update_speed_factor(self.speed_factor)
+        speed_factor = self.distance_sensor.update_speed_factor(self.speed_factor, self.orientation, self.position)
 
         x1 = self.position.x
         x2 = self.position.x + speed_factor * np.cos(orientation)
