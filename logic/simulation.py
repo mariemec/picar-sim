@@ -92,17 +92,17 @@ class Simulation:
 #
 #         t_relatif = 1 / fps
 #
-#     theta_x = my_bille.calculate_next_theta(t_relatif, a_x, init_conditions.theta_x, init_conditions.omega_x, 1)
-#     omega_x = my_bille.calculate_next_omega(t_relatif, a_x, init_conditions.theta_x, init_conditions.omega_x, 1)
+#     theta_x = my_bille.calculate_next_theta(t_relatif, a_x, init_conditions.theta_x, init_conditions.omega_x, 0.3)
+#     omega_x = my_bille.calculate_next_omega(t_relatif, a_x, init_conditions.theta_x, init_conditions.omega_x, 0.3)
 #     sx_t = np.append(sx_t, theta_x)
 #     wx_t = np.append(wx_t, omega_x)
 #
-#     theta_y = my_bille.calculate_next_theta(t_relatif, a_y, init_conditions.theta_y, init_conditions.omega_y, 1)
-#     omega_y = my_bille.calculate_next_omega(t_relatif, a_y, init_conditions.theta_y, init_conditions.omega_y, 1)
+#     theta_y = my_bille.calculate_next_theta(t_relatif, a_y, init_conditions.theta_y, init_conditions.omega_y, 0.3)
+#     omega_y = my_bille.calculate_next_omega(t_relatif, a_y, init_conditions.theta_y, init_conditions.omega_y, 0.3)
 #     sy_t = np.append(sy_t, theta_y)
 #     wy_t = np.append(wy_t, omega_y)
 #
-#     next_x, next_y = my_bille.calculate_next_pos(theta_x, theta_y)
+#     next_x, next_y = my_bille.calculate_next_pos(theta_x*2, theta_y*2)
 #     my_bille.blender_update(next_x, next_y)
 #     my_bille._bille.keyframe_insert(data_path="location")
 #     my_bille._socle.keyframe_insert(data_path="location")
@@ -113,4 +113,3 @@ class Simulation:
 #     print(
 #         f'n={i}\torientation={np.rad2deg(car.orientation)}\tradius={car.current_radius}\tv={car.speed:.2f}m/s\tax={a_x}\tay={a_y}\ttheta_x={np.rad2deg(theta_x):.2f}\tthta_y={np.rad2deg(theta_y):.2f}')
 #     t_relatif += 1 / fps
-
