@@ -5,15 +5,11 @@ class Simulation:
         self.trajectoire = Trajectoire(m=m, n=n, segments=segments)
         self.car = Car(self.trajectoire.map)
 
-## MAIN CODE
+##MAIN CODE
 # m, n = 300, 300
-# nb_frame = 1500
+# nb_frame = 870
 # bpy.context.scene.frame_end = nb_frame
 # fps = 24
-# # sim = Simulation(500, 500, [Droite((0, 10), (50, 10)),
-# # Courbe((50, 30), 20, 3*np.pi/2, 5*np.pi/2),
-# # Courbe((50, 70), 20, np.pi, 3*np.pi/2),
-# # Droite((30, 70), (30, 199))])
 # segs = []
 #
 # # Départ
@@ -55,6 +51,8 @@ class Simulation:
 # my_bille = Bille()
 # my_bille.blender_init()
 # my_bille._socle.parent = car.car_obj
+# my_bille._socle.location[2]=0.05+my_bille._socle.dimensions[2]/2
+# my_bille._socle.location[0]=0.05
 #
 # init_conditions = InitialConditions(theta_x=0, theta_y=0, omega_x=0, omega_y=0)
 # t_relatif = 0
@@ -71,8 +69,6 @@ class Simulation:
 # y_0 = 0
 # vx_0 = 0
 # vy_0 = 0
-# last_radius = 0
-# wheelbase = 0.14
 #
 # for i in range(nb_frame):
 #     bpy.context.scene.frame_set(i)
@@ -80,15 +76,14 @@ class Simulation:
 #     a = car.acceleration
 #     v = car.speed
 #     radius = car.current_radius
-#     if radius != last_radius and radius != 0:
+#     if radius != 0 and radius<100:
 #         # Car is turning
-#         a_tangential = v * v / radius
-#         a_x = a_tangential * np.cos(np.deg2rad(car.orientation))
-#         a_y = a_tangential * np.sin(np.deg2rad(car.orientation))
-#         last_radius = radius
+#         a_centripetal = (v * v) / radius
+#         a_x = a_centripetal * np.cos(car.orientation)
+#         a_y = a_centripetal * np.sin(car.orientation)
 #     else:
-#         a_x = a * np.cos(np.deg2rad(car.orientation))
-#         a_y = a * np.sin(np.deg2rad(car.orientation))
+#         a_x = a * np.cos(car.orientation)
+#         a_y = a * np.sin(car.orientation)
 #
 #     if ((a_x != last_a_x) or (a_y != last_a_y)) and (i != 0):
 #         init_conditions.reset(theta_x=sx_t[-1], theta_y=sy_t[-1], omega_x=wx_t[-1], omega_y=wy_t[-1])
@@ -116,6 +111,6 @@ class Simulation:
 #     for sensor_obj in car.suiveur_ligne_obj:
 #         sensor_obj.keyframe_insert(data_path='location')
 #     print(
-#         f'n={i}\torientation={np.rad2deg(car.orientation)}\tax={a_x}\tay={a_y}\ttheta_x={np.rad2deg(theta_x):.2f}\tthta_y={np.rad2deg(theta_y):.2f}')
+#         f'n={i}\torientation={np.rad2deg(car.orientation)}\tradius={car.current_radius}\tv={car.speed:.2f}m/s\tax={a_x}\tay={a_y}\ttheta_x={np.rad2deg(theta_x):.2f}\tthta_y={np.rad2deg(theta_y):.2f}')
 #     t_relatif += 1 / fps
 
