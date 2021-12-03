@@ -1,4 +1,3 @@
-# ----------------------- CAR -----------------------
 class Car:
     car_obj = None
     length = 0.267
@@ -192,8 +191,8 @@ class LineFollower:
 
 class DistanceSensor:
     distance = 9999999999  # temporaire -> va être initialisé à 0 et updaté dans get_distance()
-    slowing_distance = 50  # doit être changé par le bonne valeur
-    stopping_distance = 20  # doit être changé par la bonne valeur
+    slowing_distance = 70  # doit être changé par le bonne valeur
+    stopping_distance = 27  # doit être changé par la bonne valeur
 
     def __init__(self, position, _map):
         self.position = position
