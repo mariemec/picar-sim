@@ -1,6 +1,8 @@
 # ----------------------- CAR -----------------------
 class Car:
     car_obj = None
+    length = 0.267
+    width = 0.1
     suiveur_ligne_obj = []
     acceleration = 0
     current_radius = 0
@@ -11,7 +13,8 @@ class Car:
         self.speed_factor = speed_factor
         self.refresh_rate = refresh_rate
         self.speed = (self.speed_factor / 100) / (1 / self.refresh_rate)
-        self.line_follower = LineFollower(self.position, _map, self.refresh_rate)
+        self.line_follower = LineFollower(self.position, _map, self.refresh_rate,
+                                          position_offset=self.length / 2 * 100 + 2)
         self.distance_sensor = DistanceSensor(self.position)
 
     def calculate_next_pos(self):
@@ -44,8 +47,8 @@ class Car:
         try:
             self.car_obj = bpy.data.objects['Car']
         except:
-            bpy.ops.mesh.primitive_cube_add(size=0.1, location=(self.position.x, self.position.y, 0),
-                                            rotation=(0, 0, self.orientation), scale=(2, 1, 1))
+            bpy.ops.mesh.primitive_cube_add(size=1, location=(self.position.x, self.position.y, 0),
+                                            rotation=(0, 0, self.orientation), scale=(self.length, self.width, 0.1))
             bpy.context.active_object.name = 'Car'
             self.car_obj = bpy.data.objects['Car']
 
@@ -74,10 +77,11 @@ class LineFollower:
     sensor_state = [0] * 5
     last_sensor = None
 
-    def __init__(self, position, _map, refresh_rate):
+    def __init__(self, position, _map, refresh_rate, position_offset=0):
         self.position = position
         self._map = _map
         self.refresh_rate = refresh_rate
+        self.position_offset = position_offset
 
     def __get_state(self, orientation, suiveur_ligne_obj):
         """
@@ -100,14 +104,14 @@ class LineFollower:
 
         x0 = 4 * np.sin(phi)
         x1 = 2 * np.sin(phi)
-        x2 = self.position.x
+        x2 = self.position.x + self.position_offset * np.cos(orientation)
         x3 = 2 * np.sin(phi)
         x4 = 4 * np.sin(phi)
         x_offsets = [x0, x1, x2, x3, x4]
 
         y0 = 4 * np.cos(phi)
         y1 = 2 * np.cos(phi)
-        y2 = self.position.y
+        y2 = self.position.y + self.position_offset * np.sin(orientation)
         y3 = 2 * np.cos(phi)
         y4 = 4 * np.cos(phi)
         y_offsets = [y0, y1, y2, y3, y4]
@@ -163,7 +167,7 @@ class LineFollower:
         print(f'sensor_state: {self.sensor_state} | last_sensor: {self.last_sensor}')
         if self.sensor_state[2] != 1:
             if 1 in self.sensor_state:
-                adjacent_dist = 19 * (1 / self.refresh_rate) * (current_speed * 100)
+                adjacent_dist = current_speed * 100
                 if self.sensor_state[1]:
                     orientation += np.arctan(2 / adjacent_dist)
                 elif self.sensor_state[3]:
@@ -173,7 +177,7 @@ class LineFollower:
                 elif self.sensor_state[4]:
                     orientation -= np.arctan(4 / adjacent_dist)
         elif self.sensor_state[2] == 1:
-            adjacent_dist = 19 * (1 / self.refresh_rate) * (current_speed * 100)
+            adjacent_dist = current_speed * 100
             if self.last_sensor == 1:
                 orientation -= np.arctan(2 / adjacent_dist) / 2
             elif self.last_sensor == 3:
