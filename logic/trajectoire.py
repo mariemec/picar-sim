@@ -42,8 +42,8 @@ class Map:
     def print_map_to_file(self):
         rotated = [[self._map[j][i] for j in range(len(self._map))] for i in range(len(self._map[0]) - 1, -1, -1)]
         my_track = open("output.txt", "w")
-        for row in rotated:
-            np.savetxt(my_track, row)
+        for row in [' '.join([f'{item}' for item in row]) for row in rotated]:
+            my_track.write(f'{row}\n')
         my_track.close()
 
 
@@ -181,6 +181,10 @@ class Obstacle:
     def generate_path(self):
         path_coords = list()
         path_coords.append((self.x, self.y))
+        if self.angle ==0:
+            path_coords.append((self.x, self.y+1))
+        if self.angle ==90:
+            path_coords.append((self.x+1, self.y))
         return path_coords, 2
 
     def draw(self):
@@ -189,4 +193,3 @@ class Obstacle:
                                         rotation=(0.0, 0.0, self.angle), scale=(1.0, 1.0, 1.0))
 
         bpy.context.active_object.dimensions = (self.profondeur, self.largeur, self.hauteur)
-

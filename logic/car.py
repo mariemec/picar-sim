@@ -7,19 +7,19 @@ class Car:
     acceleration = 0
     current_radius = 0
 
-    def __init__(self, _map, x=0, y=0, orientation=0, speed_factor=0, refresh_rate=24):
+    def __init__(self, map, x=0, y=0, orientation=0, speed_factor=0, refresh_rate=24):
         self.position = Position(x, y)
         self.orientation = orientation
         self.speed_factor = speed_factor
         self.refresh_rate = refresh_rate
         self.speed = (self.speed_factor / 100) / (1 / self.refresh_rate)
-        self.line_follower = LineFollower(self.position, _map, self.refresh_rate,
+        self.line_follower = LineFollower(self.position, map, self.refresh_rate,
                                           position_offset=self.length / 2 * 100 + 2)
-        self.distance_sensor = DistanceSensor(self.position)
+        self.distance_sensor = DistanceSensor(self.position, map._map)
 
     def calculate_next_pos(self):
         orientation = self.line_follower.update_orientation(self.orientation, self.speed, self.suiveur_ligne_obj)
-        speed_factor = self.distance_sensor.update_speed_factor(self.speed_factor)
+        speed_factor = self.distance_sensor.update_speed_factor(self.speed_factor, self.orientation, self.position)
 
         x1 = self.position.x
         x2 = self.position.x + speed_factor * np.cos(orientation)
@@ -77,11 +77,10 @@ class LineFollower:
     sensor_state = [0] * 5
     last_sensor = None
 
-    def __init__(self, position, _map, refresh_rate, position_offset=0):
+    def __init__(self, position, _map, refresh_rate):
         self.position = position
         self._map = _map
         self.refresh_rate = refresh_rate
-        self.position_offset = position_offset
 
     def __get_state(self, orientation, suiveur_ligne_obj):
         """
@@ -191,17 +190,94 @@ class LineFollower:
 
 
 class DistanceSensor:
-    distance = 10  # temporaire -> va être initialisé à 0 et updaté dans get_distance()
-    slowing_distance = 1  # doit être changé par le bonne valeur
-    stopping_distance = 0.1  # doit être changé par la bonne valeur
+    distance = 9999999999  # temporaire -> va être initialisé à 0 et updaté dans get_distance()
+    slowing_distance = 1000000  # doit être changé par le bonne valeur
+    stopping_distance = 50  # doit être changé par la bonne valeur
 
-    def __init__(self, position):
+    def __init__(self, position, _map):
         self.position = position
+        self._map = _map
 
-    def get_distance(self):
-        pass
+    def get_distance(self, orientation, position):
+        #        tt = np.argwhere(self._map ==1)
+        #        if tt.any():
+        #            print("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@")
+        x = np.array([position.x, position.y])
+        y = np.argwhere(self._map == 2)
+        #        print("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$")
+        #        print(y)
+        #        print("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$")
+        distance_min = self.distance
+        if y.any():
+            d = y - x
 
-    def update_speed_factor(self, speed_factor):
+            coord = []
+
+            angle = int(np.rad2deg(orientation))  # 255 has no solutions
+
+            vals = []
+            for phi in range(angle - 15, angle + 16):
+                yy = y
+                for val in yy:
+                    val = list(val)
+                    if 0 < phi < 90:
+                        if (val[0] < x[0]) and (val[1] > x[1]):
+                            if val not in vals:
+                                vals += [val]
+
+                    if 90 < phi < 180:
+                        if val[0] > x[0] and val[1] < x[1]:
+                            if val not in vals:
+                                vals += [val]
+
+                    if 180 < phi < 270:
+                        if val[0] > x[0] and val[1] > x[1]:
+                            if val not in vals:
+                                vals += [val]
+
+                    if 180 < phi < 270:
+                        if val[0] < x[0] and val[1] > x[1]:
+                            if val not in vals:
+                                vals += [val]
+
+                    if phi == 0 or phi == 360:
+                        if val[0] == x[0] and val[1] > x[1]:
+                            if val not in vals:
+                                vals += [val]
+                    if phi == 90:
+                        if val[1] == x[1] and val[0] < x[0]:
+                            if val not in vals:
+                                vals += [val]
+
+                    if phi == 180:
+                        if val[0] == x[0] and val[1] < x[1]:
+                            if val not in vals:
+                                vals += [val]
+                    if phi == 270:
+                        if val[1] == x[1] and val[0] > x[0]:
+                            if val not in vals:
+                                vals += [val]
+            if np.array(vals).any():
+                dd = np.array(vals) - x
+                # +- 15 pcq le sensor voit dans un rayon de 30 deg
+                for phi in range(angle - 15, angle + 15):
+                    on_ray = np.abs(dd @ (np.sin(np.deg2rad(-phi - 90)), np.cos(np.deg2rad(-phi - 90)))) < np.sqrt(0.5)
+                    if any(on_ray):
+                        vals = np.array(vals)
+                        ymin = vals[on_ray][np.argmin(np.einsum('ij,ij->i', dd[on_ray], dd[on_ray]))]
+                        dist = np.sqrt((x[0] - ymin[0]) ** 2 + (x[1] - ymin[1]) ** 2)
+                        if distance_min > dist:
+                            coord = ymin
+                            distance_min = dist
+
+        return distance_min
+
+    def update_speed_factor(self, speed_factor, orientation, pos):
+        self.distance = self.get_distance(orientation, pos)
+        # print("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$")
+        print(self.distance)
+
+        #####change ca pour des elsif
         if self.distance < self.slowing_distance:
             # ralenti
             speed_factor -= 0.1
