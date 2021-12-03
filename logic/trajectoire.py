@@ -1,15 +1,5 @@
 # -------------------- TRAJECTOIRE --------------------
-# V_0
-# ---- TODO ----
-# - Orientation obstacle
-# - Refactoring 
-
-
-import numpy as np
-import math
-import bpy
-from bpy import context, data, ops
-
+# Marie a doubler les courbes 01/12/2021
 class Trajectoire:
 
     def __init__(self, segments, m, n):
@@ -49,6 +39,13 @@ class Map:
         print('\n'.join([' '.join([f'{item}' for item in row])
                          for row in rotated]))
 
+    def print_map_to_file(self):
+        rotated = [[self._map[j][i] for j in range(len(self._map))] for i in range(len(self._map[0]) - 1, -1, -1)]
+        my_track = open("output.txt", "w")
+        for row in rotated:
+            np.savetxt(my_track, row)
+        my_track.close()
+
 
 class Droite:
 
@@ -57,15 +54,15 @@ class Droite:
         self.x_end, self.y_end = end_coord
         self.deltaX = self.x_end - self.x_start
         self.deltaY = self.y_end - self.y_start
-        self.longueur = (np.sqrt( (self.x_end - self.x_start)**2 + (self.y_end - self.y_start)**2 )/100)
-    
+        self.longueur = (np.sqrt((self.x_end - self.x_start) ** 2 + (self.y_end - self.y_start) ** 2) / 100)
+
     def slope(self):
         if self.x_end != self.x_start:
             slope = (self.y_end - self.y_start) / (self.x_end - self.x_start)
         else:
             slope = 1000
         return slope
-    
+
     def angle(self):
         angle = np.arctan(self.slope())
         return angle
@@ -86,26 +83,36 @@ class Droite:
         path_coords = list()
         if slope == 1000:
             if self.y_start < self.y_end:
-                for i in range(self.y_start, self.y_end):
+                for i in range(0, self.y_end - self.y_start):
                     path_coords.append((self.x_start, self.y_start + i))
+                    path_coords.append((self.x_start + 1, self.y_start + i))
             else:
-                for i in range(self.y_end, self.y_start):
+                for i in range(0, self.y_start - self.y_end):
                     path_coords.append((self.x_start, self.y_end + i))
+                    path_coords.append((self.x_start + 1, self.y_end + i))
         else:
             b = self.y_start - self.x_start * slope
-            for i, x in enumerate(range(self.x_start, self.x_end + 1, 1)):
-                y = slope * x + b
-                path_coords.append((x, y))
+            if self.x_start < self.x_end:
+                for i, x in enumerate(range(self.x_start, self.x_end + 1, 1)):
+                    y = slope * x + b
+                    path_coords.append((x, y))
+                    path_coords.append((x, y + 1))
+            else:
+                for i, x in enumerate(range(self.x_end, self.x_start + 1, 1)):
+                    y = slope * x + b
+                    path_coords.append((x, y))
+                    path_coords.append((x, y + 1))
         return path_coords, 1
-    
+
     def draw(self):
         # Division par 100 pour mettre en cm
-        bpy.ops.mesh.primitive_plane_add(size=1.0, calc_uvs=True, enter_editmode=False, 
-            align='WORLD', location=((self.x_start+self.deltaX/2)/100, (self.y_start+self.deltaY/2)/100, 0.0), 
-            rotation=(0.0, 0.0, self.angle()), scale=(1.0, 1.0, 1.0))
-        
+        bpy.ops.mesh.primitive_plane_add(size=1.0, calc_uvs=True, enter_editmode=False,
+                                         align='WORLD', location=(
+            (self.x_start + self.deltaX / 2) / 100, (self.y_start + self.deltaY / 2) / 100, 0.0),
+                                         rotation=(0.0, 0.0, self.angle()), scale=(1.0, 1.0, 1.0))
+
         bpy.context.active_object.dimensions = (self.longueur, 0.018, 0)
-        
+
 
 class Courbe:
 
@@ -122,13 +129,17 @@ class Courbe:
 
         for theta in np.arange(self.start_angle, self.end_angle, 0.05):
             x = self.radius * math.cos(theta)
+            x_doublon = (self.radius + 1) * math.cos(theta)
             y = self.radius * math.sin(theta)
+            y_doublon = (self.radius + 1) * math.sin(theta)
+
             if float == 0:
                 path_coords.append((self.center_x + int(x), self.center_y + int(y)))
-        
+                path_coords.append((self.center_x + int(x_doublon), self.center_y + int(y_doublon)))
+
             else:
                 path_coords.append((self.center_x + x, self.center_y + y))
-                
+
         return path_coords, 1
 
     def draw(self):
@@ -137,28 +148,28 @@ class Courbe:
         x2 = 0
         y1 = 0
         y2 = 0
-        
+
         for i, c in enumerate(path_coords):
             # Division par 100 pour mettre en cm
             if c != (path_coords[-1]):
-                x1 = (path_coords[i][0])/100
-                x2 = (path_coords[i+1][0])/100
-                y1 = (path_coords[i][1])/100
-                y2 = (path_coords[i+1][1])/100
-            
-            longueur = np.sqrt( (x2 - x1)**2 + (y2 - y1)**2 )
+                x1 = (path_coords[i][0]) / 100
+                x2 = (path_coords[i + 1][0]) / 100
+                y1 = (path_coords[i][1]) / 100
+                y2 = (path_coords[i + 1][1]) / 100
+
+            longueur = np.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2)
             slope = (y2 - y1) / (x2 - x1)
             angle = np.arctan(slope)
-            
-            bpy.ops.mesh.primitive_plane_add(size=0.5, calc_uvs=True, enter_editmode=False, 
-            align='WORLD', location=(c[0]/100, c[1]/100, 0.0), 
-            rotation=(0.0, 0.0, angle), scale=(1.0, 1.0, 1.0))
-            
+
+            bpy.ops.mesh.primitive_plane_add(size=0.5, calc_uvs=True, enter_editmode=False,
+                                             align='WORLD', location=(c[0] / 100, c[1] / 100, 0.0),
+                                             rotation=(0.0, 0.0, angle), scale=(1.0, 1.0, 1.0))
+
             bpy.context.active_object.dimensions = (longueur, 0.018, 0)
-            
+
 
 class Obstacle:
-    
+
     def __init__(self, start_coord, angle):
         self.x, self.y = start_coord
         self.angle = angle * math.pi
@@ -166,53 +177,16 @@ class Obstacle:
         self.hauteur = 0.115
         self.largeur = 0.075
         self.profondeur = 0.064
-        
+
     def generate_path(self):
         path_coords = list()
-        path_coords.append((self.x, self.y ))
+        path_coords.append((self.x, self.y))
         return path_coords, 2
-    
-    def draw(self):
-        bpy.ops.mesh.primitive_cube_add(size=self.size, calc_uvs=True, enter_editmode=False, 
-        align='WORLD', location=((self.x)/100, (self.y)/100, self.hauteur/2), 
-        rotation=(0.0, 0.0, self.angle), scale=(1.0, 1.0, 1.0))
-        
-        bpy.context.active_object.dimensions = (self.profondeur, self.largeur, self.hauteur)
-    
-   
-if __name__ == '__main__':
-    segs = list()
-    
-    # Départ
-    segs.append(Droite((0, 0), (1830, 0)))
-    segs.append(Courbe((1830, 170), 170, math.pi*3/2, math.pi*5/2))
-    
-    # Zone 1
-    segs.append(Droite((1830, 340), (170, 340)))
-    # segs.append(Obstacle((1000,340), 0)
-    
-    segs.append(Courbe((170, 510), 170, math.pi*1/2, math.pi*3/2))
-    segs.append(Droite((170, 680), (510, 680)))
-    segs.append(Courbe((510, 850), 170, math.pi*3/2, math.pi*2))
-    
-    # Zone 2
-    segs.append(Droite((680, 850), (680, 1490)))
-    # segs.append(Obstacle((680,1000), 90)
-        
-    segs.append(Courbe((850, 1490), 170, math.pi*1/2, math.pi))
-    segs.append(Courbe((850, 1830), 170, math.pi*3/2, math.pi*2))
-    segs.append(Courbe((850, 1830), 170, math.pi*1/2, math.pi))
-    segs.append(Droite((1190, 2000), (1490, 2000)))
-    segs.append(Courbe((1490, 1830), 170, 0, math.pi*1/2))
-    
-    # Zone 3
-    segs.append(Droite((1660, 1830), (1660, 680)))
-    # segs.append(Obstacle((1660,1000), 90)
-    
-    # T final
-    segs.append(Droite((1560, 680), (1760, 680)))
 
-    
-    t = Trajectoire(segs, 2000, 2000)
-    t.show()
+    def draw(self):
+        bpy.ops.mesh.primitive_cube_add(size=self.size, calc_uvs=True, enter_editmode=False,
+                                        align='WORLD', location=((self.x) / 100, (self.y) / 100, self.hauteur / 2),
+                                        rotation=(0.0, 0.0, self.angle), scale=(1.0, 1.0, 1.0))
+
+        bpy.context.active_object.dimensions = (self.profondeur, self.largeur, self.hauteur)
 

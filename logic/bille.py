@@ -1,8 +1,4 @@
 # ----------------------- BILLE -----------------------
-from position import Position
-import numpy as np
-
-
 class Bille:
 
     g = 9.81
@@ -73,6 +69,7 @@ class Bille:
         self._bille.location.x = x
         self._bille.location.y = y
         self._bille.keyframe_insert(data_path="location")
+
 
 # -------------------- INITIAL CONDITIONS ----------
 class InitialConditions():
