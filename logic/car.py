@@ -2,7 +2,6 @@ class Car:
     car_obj = None
     length = 0.267
     width = 0.1
-    suiveur_ligne_obj = []
     acceleration = 0
     current_radius = 0
 
@@ -16,31 +15,62 @@ class Car:
                                           position_offset=self.length / 2 * 100 + 2)
         self.distance_sensor = DistanceSensor(self.position, map._map)
 
-    def calculate_next_pos(self):
-        orientation = self.line_follower.update_orientation(self.orientation, self.speed, self.suiveur_ligne_obj)
-        speed_factor = self.distance_sensor.update_speed_factor(self.speed_factor, self.orientation, self.position)
+    def update_position(self):
+        self.line_follower.check_sensors(self.orientation)
+        next_orientation = self.get_next_orientation()
+        self.speed_factor = self.distance_sensor.update_speed_factor(self.speed_factor, self.orientation, self.position)
+        self.current_radius = self.get_turn_radius(next_orientation)
 
+        self.orientation = self.normalize_angle(next_orientation)
+        self.position.x = self.position.x + self.speed_factor * np.cos(self.orientation)
+        self.position.y = self.position.y + self.speed_factor * np.sin(self.orientation)
+
+    def get_next_orientation(self):
+        """
+        public method to car orientation
+        """
+        ss = self.line_follower.sensor_state
+        next_orientation = self.orientation
+        if ss[2] != 1:
+            if 1 in ss:
+                adjacent_dist = self.speed * 100
+                if ss[1]:
+                    next_orientation += np.arctan(2 / adjacent_dist)
+                elif ss[3]:
+                    next_orientation -= np.arctan(2 / adjacent_dist)
+                elif ss[0]:
+                    next_orientation += np.arctan(4 / adjacent_dist)
+                elif ss[4]:
+                    next_orientation -= np.arctan(4 / adjacent_dist)
+        elif ss[2] == 1:
+            adjacent_dist = self.speed * 100
+            if self.line_follower.last_sensor == 1:
+                next_orientation -= np.arctan(2 / adjacent_dist) / 2
+            elif self.line_follower.last_sensor == 3:
+                next_orientation += np.arctan(2 / adjacent_dist) / 2
+        try:
+            self.line_follower.last_sensor = ss.index(1)  # get index of active sensor
+        except:
+            pass
+
+        return round(next_orientation, 4)
+
+    def get_turn_radius(self, next_orientation):
         x1 = self.position.x
-        x2 = self.position.x + speed_factor * np.cos(orientation)
+        x2 = self.position.x + self.speed_factor * np.cos(next_orientation)
         y1 = self.position.y
-        y2 = self.position.y + speed_factor * np.sin(orientation)
+        y2 = self.position.y + self.speed_factor * np.sin(next_orientation)
 
         delta_s = np.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2)
-        delta_theta = np.abs(self.orientation - orientation)
+        delta_theta = np.abs(self.orientation - next_orientation)
+        return (delta_s / delta_theta) / 100
 
-        if orientation > 2 * np.pi:
-            orientation -= 2 * np.pi
-        if orientation < 0:
-            orientation += 2 * np.pi
-
-        self.current_radius = (delta_s / delta_theta) / 100
-
-        print(f'radius: {self.current_radius}')
-
-        return (self.position.x + speed_factor * np.cos(orientation),
-                self.position.y + speed_factor * np.sin(orientation),
-                orientation,
-                speed_factor)
+    def normalize_angle(self, angle):
+        if angle > 2 * np.pi:
+            angle -= 2 * np.pi
+        if angle < 0:
+            angle += 2 * np.pi
+        return angle
 
     def blender_init(self):
         try:
@@ -51,20 +81,18 @@ class Car:
             bpy.context.active_object.name = 'Car'
             self.car_obj = bpy.data.objects['Car']
 
-        for i in range(5):
-            bpy.ops.mesh.primitive_cube_add(size=0.01, location=(self.position.x, self.position.y + (i - 2) / 100, 0),
-                                            rotation=(0, 0, 0))
-            bpy.context.active_object.name = f'suiveur_ligne{i}'
-            self.suiveur_ligne_obj += [bpy.data.objects[f'suiveur_ligne{i}']]
+        self.line_follower.blender_init()
 
     def blender_update(self):
-        self.position.x, self.position.y, self.orientation, self.speed_factor = self.calculate_next_pos()
+        self.update_position()
         self.car_obj.location[0] = self.position.x / 100
         self.car_obj.location[1] = self.position.y / 100
         self.car_obj.rotation_euler[2] = self.orientation
         old_speed = self.speed
         self.speed = (self.speed_factor / 100) / (1 / self.refresh_rate)
         self.acceleration = (self.speed - old_speed) / (1 / self.refresh_rate)
+
+        self.line_follower.blender_update()
 
 
 class LineFollower:
@@ -73,7 +101,10 @@ class LineFollower:
 
     >> update_orientation will return an updated orientation based on the line follower sensors state.
     """
+    line_follower_obj = []
     sensor_state = [0] * 5
+    x_pos = [0] * 5
+    y_pos = [0] * 5
     last_sensor = None
 
     def __init__(self, position, _map, refresh_rate, position_offset=0):
@@ -82,13 +113,24 @@ class LineFollower:
         self.refresh_rate = refresh_rate
         self.position_offset = position_offset
 
-    def __get_state(self, orientation, suiveur_ligne_obj):
+    def blender_init(self):
+        for i in range(5):
+            bpy.ops.mesh.primitive_cube_add(size=0.01, location=(self.position.x, self.position.y + (i - 2) / 100, 0),
+                                            rotation=(0, 0, 0))
+            bpy.context.active_object.name = f'suiveur_ligne{i}'
+            self.line_follower_obj += [bpy.data.objects[f'suiveur_ligne{i}']]
+
+    def blender_update(self):
+        for i in range(5):
+            self.line_follower_obj[i].location[0] = self.x_pos[i] / 100
+            self.line_follower_obj[i].location[1] = self.y_pos[i] / 100
+
+    def check_sensors(self, orientation):
         """
         private method to get the line follower sensors state
         :param orientation: current car orientation
         :return: list containing the 5 sensors state
         """
-
         if 0 <= orientation < np.pi / 2:
             phi = orientation
         elif np.pi / 2 <= orientation < np.pi:
@@ -118,75 +160,41 @@ class LineFollower:
         # loops through the sensors_state list to update their state
         for i in range(len(self.sensor_state)):
             if i == 2:
-                x = int(round(x2))
-                y = int(round(y2))
+                x = x2
+                y = y2
             else:
                 if 0 <= orientation < np.pi / 2:
                     if i == 0 or i == 1:
-                        x = int(round(x2 - x_offsets[i]))
-                        y = int(round(y2 + y_offsets[i]))
+                        x = x2 - x_offsets[i]
+                        y = y2 + y_offsets[i]
                     if i == 3 or i == 4:
-                        x = int(round(x2 + x_offsets[i]))
-                        y = int(round(y2 - y_offsets[i]))
+                        x = x2 + x_offsets[i]
+                        y = y2 - y_offsets[i]
                 elif np.pi / 2 <= orientation < np.pi:
                     if i == 0 or i == 1:
-                        x = int(round(x2 - x_offsets[i]))
-                        y = int(round(y2 - y_offsets[i]))
+                        x = x2 - x_offsets[i]
+                        y = y2 - y_offsets[i]
                     if i == 3 or i == 4:
-                        x = int(round(x2 + x_offsets[i]))
-                        y = int(round(y2 + y_offsets[i]))
+                        x = x2 + x_offsets[i]
+                        y = y2 + y_offsets[i]
                 elif np.pi <= orientation < 3 * np.pi / 2:
                     if i == 0 or i == 1:
-                        x = int(round(x2 + x_offsets[i]))
-                        y = int(round(y2 - y_offsets[i]))
+                        x = x2 + x_offsets[i]
+                        y = y2 - y_offsets[i]
                     if i == 3 or i == 4:
-                        x = int(round(x2 - x_offsets[i]))
-                        y = int(round(y2 + y_offsets[i]))
+                        x = x2 - x_offsets[i]
+                        y = y2 + y_offsets[i]
                 elif 3 * np.pi / 2 <= orientation < 2 * np.pi:
                     if i == 0 or i == 1:
-                        x = int(round(x2 + x_offsets[i]))
-                        y = int(round(y2 + y_offsets[i]))
+                        x = x2 + x_offsets[i]
+                        y = y2 + y_offsets[i]
                     if i == 3 or i == 4:
-                        x = int(round(x2 - x_offsets[i]))
-                        y = int(round(y2 - y_offsets[i]))
+                        x = x2 - x_offsets[i]
+                        y = y2 - y_offsets[i]
 
-            self.sensor_state[i] = self._map.peek(x, y)
-            suiveur_ligne_obj[i].location[0] = x / 100
-            suiveur_ligne_obj[i].location[1] = y / 100
-
-    def update_orientation(self, orientation, current_speed, suiveur_ligne_obj):
-        """
-        public method to get the updated car orientation
-        :param current_speed: current car speed
-        :param orientation: current car orientation
-        :return: new car orientation
-        """
-        self.__get_state(orientation, suiveur_ligne_obj)
-
-        print(f'sensor_state: {self.sensor_state} | last_sensor: {self.last_sensor}')
-        if self.sensor_state[2] != 1:
-            if 1 in self.sensor_state:
-                adjacent_dist = current_speed * 100
-                if self.sensor_state[1]:
-                    orientation += np.arctan(2 / adjacent_dist)
-                elif self.sensor_state[3]:
-                    orientation -= np.arctan(2 / adjacent_dist)
-                elif self.sensor_state[0]:
-                    orientation += np.arctan(4 / adjacent_dist)
-                elif self.sensor_state[4]:
-                    orientation -= np.arctan(4 / adjacent_dist)
-        elif self.sensor_state[2] == 1:
-            adjacent_dist = current_speed * 100
-            if self.last_sensor == 1:
-                orientation -= np.arctan(2 / adjacent_dist) / 2
-            elif self.last_sensor == 3:
-                orientation += np.arctan(2 / adjacent_dist) / 2
-        try:
-            self.last_sensor = self.sensor_state.index(1)
-        except:
-            pass
-
-        return round(orientation, 4)
+            self.sensor_state[i] = self._map.peek(int(round(x)), int(round(y)))
+            self.x_pos[i] = x
+            self.y_pos[i] = y
 
 
 class DistanceSensor:

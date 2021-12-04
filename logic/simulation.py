@@ -106,7 +106,7 @@ for i in range(nb_frame):
     my_ball.holder_obj.keyframe_insert(data_path="location")
     car.car_obj.keyframe_insert(data_path='location')
     car.car_obj.keyframe_insert(data_path='rotation_euler')
-    for sensor_obj in car.suiveur_ligne_obj:
+    for sensor_obj in car.line_follower.line_follower_obj:
         sensor_obj.keyframe_insert(data_path='location')
     print(
         f'n={i}\torientation={np.rad2deg(car.orientation)}\tradius={car.current_radius}\tv={car.speed:.2f}m/s\tax={a_x}\tay={a_y}\ttheta_x={np.rad2deg(theta_x):.2f}\tthta_y={np.rad2deg(theta_y):.2f}')
