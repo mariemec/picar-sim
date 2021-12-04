@@ -1,5 +1,5 @@
 def generate_main():
-    files = ["position.py", "bille.py", "car.py",  "trajectoire.py", "simulation.py"]
+    files = ["position.py", "ball.py", "car.py",  "trajectory.py", "simulation.py"]
     out_lines = list()
 
     for filename in files:

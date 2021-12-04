@@ -1,6 +1,6 @@
 # -------------------- TRAJECTOIRE --------------------
 # Marie a doubler les courbes 01/12/2021
-class Trajectoire:
+class Trajectory:
 
     def __init__(self, segments, m, n):
         self.segments = segments
@@ -47,7 +47,7 @@ class Map:
         my_track.close()
 
 
-class Droite:
+class Line:
 
     def __init__(self, start_coord, end_coord):
         self.x_start, self.y_start = start_coord
@@ -114,7 +114,7 @@ class Droite:
         bpy.context.active_object.dimensions = (self.longueur, 0.018, 0)
 
 
-class Courbe:
+class Curve:
 
     def __init__(self, center_coord, radius, start_angle, end_angle):
         self.center_x, self.center_y = center_coord
