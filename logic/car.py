@@ -13,14 +13,14 @@ class Car:
         self.speed = (self.speed_factor / 100) / (1 / self.refresh_rate)
         self.line_follower = LineFollower(self.position, map, self.refresh_rate,
                                           position_offset=self.length / 2 * 100 + 2)
-        self.distance_sensor = DistanceSensor(self.position, map._map)
+        self.distance_sensor = DistanceSensor(self.position, map)
 
     def update_position(self):
         self.line_follower.check_sensors(self.orientation)
         next_orientation = self.get_next_orientation()
-        self.speed_factor = self.distance_sensor.update_speed_factor(self.speed_factor, self.orientation, self.position)
+        self.distance_sensor.check_sensor(self.orientation)
+        self.update_speed_factor()
         self.current_radius = self.get_turn_radius(next_orientation)
-
         self.orientation = self.normalize_angle(next_orientation)
         self.position.x = self.position.x + self.speed_factor * np.cos(self.orientation)
         self.position.y = self.position.y + self.speed_factor * np.sin(self.orientation)
@@ -54,6 +54,23 @@ class Car:
             pass
 
         return round(next_orientation, 4)
+
+    def update_speed_factor(self):
+        dist = self.distance_sensor.distance
+        stop_dist = self.distance_sensor.stopping_distance
+        slow_dist = self.distance_sensor.slowing_distance
+
+        if dist < stop_dist:
+            # arret
+            self.speed_factor = 0
+        elif dist < slow_dist:
+            # ralentir
+            self.speed_factor -= 0.01
+        elif dist > slow_dist:
+            if self.speed_factor < 0.91666:
+                self.speed_factor += 0.1
+
+        self.speed_factor = round(self.speed_factor, 4)
 
     def get_turn_radius(self, next_orientation):
         x1 = self.position.x
@@ -202,35 +219,21 @@ class DistanceSensor:
     slowing_distance = 70  # doit être changé par le bonne valeur
     stopping_distance = 27  # doit être changé par la bonne valeur
 
-    def __init__(self, position, _map):
+    def __init__(self, position, map):
         self.position = position
-        self._map = _map
+        self.map = map
 
-    def get_distance(self, orientation, position):
-        tt = np.argwhere(self._map == 1)
-        # if tt.any():
-        #    print("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@")
-        x = np.array([position.x, position.y])
-        y = np.argwhere(self._map == 2)
+    def check_sensor(self, orientation):
+        x = np.array([self.position.x, self.position.y])
+        y = np.argwhere(self.map._map == 2)
 
         distance_min = self.distance
         if y.any():
-            # print("%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%")
-            d = y - x
-
-            coord = []
             vals = []
 
             angle = int(np.rad2deg(orientation))
             min_angle = angle - 15 + 90
             max_angle = angle + 16 + 90
-
-            #            if min_angle <0:
-            #                min_angle = 360 + min_angle
-            #            if max_angle > 360:
-            #                max_angle =  0 + (max_angle - 360)
-
-            print(f'min angle {min_angle}  max angle {max_angle}')
 
             for phi in range(min_angle, max_angle):
                 yy = y
@@ -283,30 +286,6 @@ class DistanceSensor:
                         ymin = vals[on_ray][np.argmin(np.einsum('ij,ij->i', dd[on_ray], dd[on_ray]))]
                         dist = np.sqrt((x[0] - ymin[0]) ** 2 + (x[1] - ymin[1]) ** 2)
                         if distance_min > dist:
-                            print("**************************************************")
-                            print(phi, x[0])
-                            coord = ymin
                             distance_min = dist
 
-        return distance_min
-
-    def update_speed_factor(self, speed_factor, orientation, pos):
-        isObstacle = False
-        self.distance = self.get_distance(orientation, pos)
-        print("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$")
-        print("distance : ", self.distance, "orientation", np.rad2deg(orientation))
-
-        #####change ca pour des elsif
-        if self.distance < self.stopping_distance:
-            # arret
-            speed_factor = 0
-            isObstacle = True
-            # contourner(orientation)
-        elif self.distance < self.slowing_distance:
-            # ralenti
-            speed_factor -= 0.01
-        elif self.distance > self.slowing_distance:
-            if speed_factor < 0.91666:
-                speed_factor += 0.1
-
-        return round(speed_factor, 4)
+        self.distance = distance_min
