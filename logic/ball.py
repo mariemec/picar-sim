@@ -1,6 +1,5 @@
 # ----------------------- BILLE -----------------------
 class Ball:
-
     g = 9.81
 
     def __init__(self, theta=0, x=0, y=0, z=0):
@@ -40,7 +39,9 @@ class Ball:
         return angular_velocity * damping + -u * damping * position  # Velocity = d/dt(Position)
 
     def calculate_next_pos(self, theta_x, theta_y):
-        return self.radius_pendulum * np.sin(theta_x), self.radius_pendulum * np.sin(theta_y)
+        next_x = self.radius_pendulum * np.sin(theta_x)
+        next_y = self.radius_pendulum * np.sin(theta_y)
+        return next_x, next_y
 
     def blender_init(self):
         try:
@@ -61,13 +62,12 @@ class Ball:
             bpy.context.active_object.name = 'bille'
             self.ball_obj = bpy.data.objects['bille']
 
-        self.ball_obj.parent = self.holder_obj
-
     def blender_update(self, x, y):
         self.position.x = x
         self.position.y = y
         self.ball_obj.location.x = x
         self.ball_obj.location.y = y
+        self.ball_obj.location.z = self.position.z
         self.ball_obj.keyframe_insert(data_path="location")
 
 

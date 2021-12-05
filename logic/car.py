@@ -5,8 +5,6 @@ import numpy as np
 
 class Car:
     car_obj = None
-    length = 0.267
-    width = 0.1
     acceleration = 0
     current_radius = 0
     is_obstacle = False
@@ -16,11 +14,14 @@ class Car:
     obstacle_bypass = None
     overridden_speed_factor = None
 
-    def __init__(self, map, x=0, y=0, orientation=0, speed_factor=0, refresh_rate=24):
+    def __init__(self, map, x=0, y=0, orientation=0, speed_factor=0, refresh_rate=24, length = 0.267, width = 0.1, height = 0.1):
         self.position = Position(x, y)
         self.orientation = orientation
         self.speed_factor = speed_factor
         self.refresh_rate = refresh_rate
+        self.length = length
+        self.width = width
+        self.height = height
         self.speed = (self.speed_factor / 100) / (1 / self.refresh_rate)
         self.line_follower = LineFollower(self.position, map, self.refresh_rate,
                                           position_offset=self.length / 2 * 100 + 2)
@@ -90,10 +91,6 @@ class Car:
         if dist < stop_dist:
             # arret
             self.speed_factor = 0
-        elif dist < slow_dist:
-            # ralentir
-            # self.speed_factor -= 0.01
-            pass
         elif dist > slow_dist:
             if self.speed_factor < 0.91666:
                 self.speed_factor += 0.1
@@ -121,8 +118,8 @@ class Car:
         try:
             self.car_obj = bpy.data.objects['Car']
         except:
-            bpy.ops.mesh.primitive_cube_add(size=1, location=(self.position.x, self.position.y, 0),
-                                            rotation=(0, 0, self.orientation), scale=(self.length, self.width, 0.1))
+            bpy.ops.mesh.primitive_cube_add(size=1, location=(self.position.x, self.position.y, self.height/2),
+                                            rotation=(0, 0, self.orientation), scale=(self.length, self.width, self.height))
             bpy.context.active_object.name = 'Car'
             self.car_obj = bpy.data.objects['Car']
 
@@ -315,8 +312,6 @@ class DistanceSensor:
                         dist = np.sqrt((x[0] - ymin[0]) ** 2 + (x[1] - ymin[1]) ** 2)
                         if distance_min > dist:
                             distance_min = dist
-
-        self.distance = distance_min
 
 
 class ObstacleBypass:
