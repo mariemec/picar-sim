@@ -5,7 +5,7 @@ class Simulation:
 
 #MAIN CODE
 m, n = 300, 300
-nb_frame = 1000
+nb_frame = 1800
 bpy.context.scene.frame_end = nb_frame
 fps = 24
 segs = []
@@ -24,7 +24,7 @@ segs.append(Curve((51, 85), 17, math.pi * 3 / 2, math.pi * 2))
 
 # Zone 2
 segs.append(Line((68, 85), (68, 149)))
-segs.append(Obstacle((68,100), 90))
+segs.append(Obstacle((68,110), 90))
 
 segs.append(Curve((85, 149), 17, math.pi * 1 / 2, math.pi))
 segs.append(Curve((85, 183), 17, math.pi * 3 / 2, math.pi * 2))
@@ -34,7 +34,7 @@ segs.append(Curve((149, 183), 17, 0, math.pi * 1 / 2))
 
 # Zone 3
 segs.append(Line((166, 183), (166, 68)))
-segs.append(Obstacle((166,100), 90))
+segs.append(Obstacle((166,120), 90))
 
 # T final
 segs.append(Line((156, 68), (176, 68)))

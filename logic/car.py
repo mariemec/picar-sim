@@ -1,9 +1,20 @@
+import time
+
+import numpy as np
+
+
 class Car:
     car_obj = None
     length = 0.267
     width = 0.1
     acceleration = 0
     current_radius = 0
+    is_obstacle = False
+    bypass_stage = 0
+    next_stage_position_x = 0
+    next_stage_position_y = 0
+    obstacle_bypass = None
+    overridden_speed_factor = None
 
     def __init__(self, map, x=0, y=0, orientation=0, speed_factor=0, refresh_rate=24):
         self.position = Position(x, y)
@@ -17,13 +28,29 @@ class Car:
 
     def update_position(self):
         self.line_follower.check_sensors(self.orientation)
-        next_orientation = self.get_next_orientation()
         self.distance_sensor.check_sensor(self.orientation)
-        self.update_speed_factor()
+
+        if self.obstacle_bypass is None:
+            self.check_obstacle()
+            next_orientation = self.get_next_orientation()
+        else:
+            self.overridden_speed_factor, next_orientation = self.obstacle_bypass.sequence(self.position, self.orientation, self.speed_factor)
+            if self.obstacle_bypass.stage == 7 and 1 in self.line_follower.sensor_state:
+                self.obstacle_bypass = None
+
+        if self.overridden_speed_factor is None:
+            self.update_speed_factor()
+        else:
+            self.speed_factor = self.overridden_speed_factor
+
         self.current_radius = self.get_turn_radius(next_orientation)
         self.orientation = self.normalize_angle(next_orientation)
         self.position.x = self.position.x + self.speed_factor * np.cos(self.orientation)
         self.position.y = self.position.y + self.speed_factor * np.sin(self.orientation)
+
+    def check_obstacle(self):
+        if self.distance_sensor.distance <= self.distance_sensor.stopping_distance:
+            self.obstacle_bypass = ObstacleBypass(self.position, self.orientation, self.refresh_rate)
 
     def get_next_orientation(self):
         """
@@ -65,7 +92,8 @@ class Car:
             self.speed_factor = 0
         elif dist < slow_dist:
             # ralentir
-            self.speed_factor -= 0.01
+            # self.speed_factor -= 0.01
+            pass
         elif dist > slow_dist:
             if self.speed_factor < 0.91666:
                 self.speed_factor += 0.1
@@ -215,7 +243,7 @@ class LineFollower:
 
 
 class DistanceSensor:
-    distance = 9999999999  # temporaire -> va être initialisé à 0 et updaté dans get_distance()
+    distance = 9999999  # temporaire -> va être initialisé à 0 et updaté dans get_distance()
     slowing_distance = 70  # doit être changé par le bonne valeur
     stopping_distance = 27  # doit être changé par la bonne valeur
 
@@ -227,7 +255,7 @@ class DistanceSensor:
         x = np.array([self.position.x, self.position.y])
         y = np.argwhere(self.map._map == 2)
 
-        distance_min = self.distance
+        distance_min = 9999999
         if y.any():
             vals = []
 
@@ -289,3 +317,59 @@ class DistanceSensor:
                             distance_min = dist
 
         self.distance = distance_min
+
+
+class ObstacleBypass:
+    stage = 1
+    next_stage_orientation = 0
+    wait_counter = 0
+
+    def __init__(self, starting_position, starting_orientation, refresh_rate):
+        self.starting_orientation = starting_orientation
+        self.refresh_rate = refresh_rate
+        self.next_stage_position_x = starting_position.x - 20 * np.cos(starting_orientation)
+        self.next_stage_position_y = starting_position.y - 20 * np.sin(starting_orientation)
+
+    def sequence(self, position, orientation, speed_factor):
+        overridden_speed_factor = None
+        print(f'stage: {self.stage}')
+        if self.stage == 1:
+            self.wait_counter += 1
+            overridden_speed_factor = 0
+            if self.wait_counter > 5 / (1 / self.refresh_rate):
+                overridden_speed_factor = -0.3
+                self.stage += 1
+
+        elif self.stage == 2:
+            if self.next_stage_position_x - 1 < position.x < self.next_stage_position_x + 1 and self.next_stage_position_y - 1 < position.y < self.next_stage_position_y + 1:
+                self.stage += 1
+            else:
+                overridden_speed_factor = -0.3
+
+        elif self.stage == 3:
+            hypotenus = 30 / np.cos(0.35)
+            self.next_stage_position_x = position.x + hypotenus * np.cos(orientation)
+            self.next_stage_position_y = position.y + hypotenus * np.sin(orientation)
+            self.next_stage_orientation = orientation + 0.35
+            self.stage += 1
+
+        elif self.stage == 4:
+            if speed_factor > 0:
+                orientation += 0.03
+            if orientation > self.next_stage_orientation:
+                self.stage += 1
+
+        elif self.stage == 5:
+            if self.next_stage_position_x - 0.5 < position.x < self.next_stage_position_x + 0.5 or self.next_stage_position_y - 0.5 < position.y < self.next_stage_position_y + 0.5:
+                self.next_stage_orientation = orientation - 0.60
+                self.stage += 1
+
+        elif self.stage == 6:
+            orientation -= 0.03
+            if orientation < self.next_stage_orientation:
+                self.stage += 1
+
+        elif self.stage == 7:
+            pass
+
+        return overridden_speed_factor, orientation
