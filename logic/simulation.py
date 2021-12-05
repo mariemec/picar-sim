@@ -1,14 +1,96 @@
+# ----------------------SIMULATION-----------------------------
 class Simulation:
+
     def __init__(self, m, n, segments):
         self.trajectory = Trajectory(m=m, n=n, segments=segments)
         self.car = Car(self.trajectory.map)
+        self.ball = Ball(z=self.car.height)
+        self.init_conditions = InitialConditions(theta_x=0, theta_y=0, omega_x=0, omega_y=0)
+
+    def run(self):
+        nb_frame = 1000
+        bpy.context.scene.frame_end = nb_frame
+        fps = 24
+        t_relatif = 0
+        sx_t = np.array([])
+        sy_t = np.array([])
+        wx_t = np.array([])
+        wy_t = np.array([])
+        last_a_x = 0
+        last_a_y = 0
+
+        self.car.blender_init()
+        self.ball.blender_init()
+        self.ball.holder_obj.parent = self.car.car_obj
+        self.ball.holder_obj.location[2] = self.car.height / 2 + self.ball.holder_obj.dimensions[2] / 2
+
+        for i in range(nb_frame):
+            bpy.context.scene.frame_set(i)
+
+            # Update car position
+            self.car.blender_update()
+
+            a = self.car.acceleration
+            v = self.car.speed
+            radius = self.car.current_radius
+
+            # If the car is turning, calculate centripetal acceleration. Otherwise, split a into x,y components
+            if radius != 0 and radius < 100:
+                # Car is turning
+                a_centripetal = (v * v) / radius
+                a_x = a_centripetal * np.cos(self.car.orientation)
+                a_y = a_centripetal * np.sin(self.car.orientation)
+            else:
+                a_x = a * np.cos(self.car.orientation)
+                a_y = a * np.sin(self.car.orientation)
+
+            # If acceleration is changing, ball trajectory needs to be recalculated
+            if ((a_x != last_a_x) or (a_y != last_a_y)) and (i != 0):
+                self.init_conditions.reset(theta_x=sx_t[-1], theta_y=sy_t[-1], omega_x=wx_t[-1], omega_y=wy_t[-1])
+                last_a_x = a_x
+                last_a_y = a_y
+                t_relatif = 1 / fps
+
+            # Friction coefficient
+            mu = 0.2
+
+            # Calculate next ball angle with vertical (x-axis)
+            theta_x = self.ball.calculate_next_theta(t_relatif, a_x, self.init_conditions.theta_x,
+                                                     self.init_conditions.omega_x, mu)
+            omega_x = self.ball.calculate_next_omega(t_relatif, a_x, self.init_conditions.theta_x,
+                                                     self.init_conditions.omega_x, mu)
+            sx_t = np.append(sx_t, theta_x)
+            wx_t = np.append(wx_t, omega_x)
+
+            # Calculate next ball angle with vertical (y-axis)
+            theta_y = self.ball.calculate_next_theta(t_relatif, a_y, self.init_conditions.theta_y,
+                                                     self.init_conditions.omega_y, mu)
+            omega_y = self.ball.calculate_next_omega(t_relatif, a_y, self.init_conditions.theta_y,
+                                                     self.init_conditions.omega_y, mu)
+            sy_t = np.append(sy_t, theta_y)
+            wy_t = np.append(wy_t, omega_y)
+
+            # Pendulum calculation (2 angles)
+            next_x, next_y = self.ball.calculate_next_pos(theta_x, theta_y)
+
+            # Update position of ball
+            self.ball.blender_update(next_x + self.car.car_obj.location.x, next_y + self.car.car_obj.location.y)
+
+            # Insert all keyframes for animation
+            self.ball.ball_obj.keyframe_insert(data_path="location")
+            self.ball.holder_obj.keyframe_insert(data_path="location")
+            self.car.car_obj.keyframe_insert(data_path='location')
+            self.car.car_obj.keyframe_insert(data_path='rotation_euler')
+            for sensor_obj in self.car.line_follower.line_follower_obj:
+                sensor_obj.keyframe_insert(data_path='location')
+            print(
+                f'n={i}\torientation={np.rad2deg(self.car.orientation)}\tradius={self.car.current_radius}\tv={self.car.speed:.2f}m/s\tax={a_x}\tay={a_y}\ttheta_x={np.rad2deg(theta_x):.2f}\tthta_y={np.rad2deg(theta_y):.2f}')
+
+            # increase timeframe
+            t_relatif += 1 / fps
 
 
 ## MAIN CODE
-m, n = 300, 300
-nb_frame = 1000
-bpy.context.scene.frame_end = nb_frame
-fps = 24
 segs = []
 
 # Départ
@@ -40,77 +122,9 @@ segs.append(Obstacle((166, 100), 90))
 
 # T final
 segs.append(Line((156, 68), (176, 68)))
+m = 250
+n = 250
 sim = Simulation(m, n, segs)
 # sim.trajectoire.map.print_map_to_file()
 
-car = sim.car
-car.position.x = 0
-car.position.y = 0
-car.blender_init()
-
-my_ball = Ball(z=car.height)
-my_ball.blender_init()
-my_ball.holder_obj.parent = car.car_obj
-my_ball.holder_obj.location[2] = car.height / 2 + my_ball.holder_obj.dimensions[2] / 2
-
-init_conditions = InitialConditions(theta_x=0, theta_y=0, omega_x=0, omega_y=0)
-t_relatif = 0
-sx_t = np.array([])
-sy_t = np.array([])
-wx_t = np.array([])
-wy_t = np.array([])
-
-last_a_x = 0
-last_a_y = 0
-a_x = 0
-a_y = 0
-x_0 = 0
-y_0 = 0
-vx_0 = 0
-vy_0 = 0
-
-for i in range(nb_frame):
-    bpy.context.scene.frame_set(i)
-    car.blender_update()
-    a = car.acceleration
-    v = car.speed
-    radius = car.current_radius
-    if radius != 0 and radius < 100:
-        # Car is turning
-        a_centripetal = (v * v) / radius
-        a_x = a_centripetal * np.cos(car.orientation)
-        a_y = a_centripetal * np.sin(car.orientation)
-    else:
-        a_x = a * np.cos(car.orientation)
-        a_y = a * np.sin(car.orientation)
-
-    if ((a_x != last_a_x) or (a_y != last_a_y)) and (i != 0):
-        init_conditions.reset(theta_x=sx_t[-1], theta_y=sy_t[-1], omega_x=wx_t[-1], omega_y=wy_t[-1])
-        last_a_x = a_x
-        last_a_y = a_y
-
-        t_relatif = 1 / fps
-
-    theta_x = my_ball.calculate_next_theta(t_relatif, a_x, init_conditions.theta_x, init_conditions.omega_x, 0.2)
-    omega_x = my_ball.calculate_next_omega(t_relatif, a_x, init_conditions.theta_x, init_conditions.omega_x, 0.2)
-    sx_t = np.append(sx_t, theta_x)
-    wx_t = np.append(wx_t, omega_x)
-
-    theta_y = my_ball.calculate_next_theta(t_relatif, a_y, init_conditions.theta_y, init_conditions.omega_y, 0.2)
-    omega_y = my_ball.calculate_next_omega(t_relatif, a_y, init_conditions.theta_y, init_conditions.omega_y, 0.2)
-    sy_t = np.append(sy_t, theta_y)
-    wy_t = np.append(wy_t, omega_y)
-
-    next_x, next_y = my_ball.calculate_next_pos(theta_x, theta_y)
-    my_ball.blender_update(next_x + car.car_obj.location.x, next_y + car.car_obj.location.y)
-
-    my_ball.ball_obj.keyframe_insert(data_path="location")
-    my_ball.holder_obj.keyframe_insert(data_path="location")
-    car.car_obj.keyframe_insert(data_path='location')
-    car.car_obj.keyframe_insert(data_path='rotation_euler')
-    for sensor_obj in car.line_follower.line_follower_obj:
-        sensor_obj.keyframe_insert(data_path='location')
-    print(
-        f'n={i}\torientation={np.rad2deg(car.orientation)}\tradius={car.current_radius}\tv={car.speed:.2f}m/s\tax={a_x}\tay={a_y}\ttheta_x={np.rad2deg(theta_x):.2f}\tthta_y={np.rad2deg(theta_y):.2f}')
-    t_relatif += 1 / fps
-
+sim.run()
