@@ -7,10 +7,6 @@ class Car:
     car_obj = None
     acceleration = 0
     current_radius = 0
-    is_obstacle = False
-    bypass_stage = 0
-    next_stage_position_x = 0
-    next_stage_position_y = 0
     obstacle_bypass = None
     overridden_speed_factor = None
 
@@ -23,8 +19,7 @@ class Car:
         self.width = width
         self.height = height
         self.speed = (self.speed_factor / 100) / (1 / self.refresh_rate)
-        self.line_follower = LineFollower(self.position, map, self.refresh_rate,
-                                          position_offset=self.length / 2 * 100 + 2)
+        self.line_follower = LineFollower(self.position, map, self.length / 2 * 100 + 2)
         self.distance_sensor = DistanceSensor(self.position, map)
 
     def update_position(self):
@@ -32,7 +27,7 @@ class Car:
         self.distance_sensor.check_sensor(self.orientation)
 
         if self.obstacle_bypass is None:
-            self.check_obstacle()
+            self.check_bypass()
             next_orientation = self.get_next_orientation()
         else:
             self.overridden_speed_factor, next_orientation = self.obstacle_bypass.sequence(self.position, self.orientation, self.speed_factor)
@@ -49,7 +44,7 @@ class Car:
         self.position.x = self.position.x + self.speed_factor * np.cos(self.orientation)
         self.position.y = self.position.y + self.speed_factor * np.sin(self.orientation)
 
-    def check_obstacle(self):
+    def check_bypass(self):
         if self.distance_sensor.distance <= self.distance_sensor.stopping_distance:
             self.obstacle_bypass = ObstacleBypass(self.position, self.orientation, self.refresh_rate)
 
@@ -86,12 +81,11 @@ class Car:
     def update_speed_factor(self):
         dist = self.distance_sensor.distance
         stop_dist = self.distance_sensor.stopping_distance
-        slow_dist = self.distance_sensor.slowing_distance
 
         if dist < stop_dist:
             # arret
             self.speed_factor = 0
-        elif dist > slow_dist:
+        elif dist > stop_dist:
             if self.speed_factor < 0.91666:
                 self.speed_factor += 0.1
 
@@ -149,10 +143,9 @@ class LineFollower:
     y_pos = [0] * 5
     last_sensor = None
 
-    def __init__(self, position, _map, refresh_rate, position_offset=0):
+    def __init__(self, position, map, position_offset=0.0):
         self.position = position
-        self._map = _map
-        self.refresh_rate = refresh_rate
+        self.map = map
         self.position_offset = position_offset
 
     def blender_init(self):
@@ -234,15 +227,14 @@ class LineFollower:
                         x = x2 - x_offsets[i]
                         y = y2 - y_offsets[i]
 
-            self.sensor_state[i] = self._map.peek(int(round(x)), int(round(y)))
+            self.sensor_state[i] = self.map.peek(int(round(x)), int(round(y)))
             self.x_pos[i] = x
             self.y_pos[i] = y
 
 
 class DistanceSensor:
-    distance = 9999999  # temporaire -> va être initialisé à 0 et updaté dans get_distance()
-    slowing_distance = 70  # doit être changé par le bonne valeur
-    stopping_distance = 27  # doit être changé par la bonne valeur
+    distance = 9999999  # temporary value
+    stopping_distance = 27
 
     def __init__(self, position, map):
         self.position = position

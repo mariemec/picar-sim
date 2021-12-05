@@ -67,17 +67,6 @@ class Line:
         angle = np.arctan(self.slope())
         return angle
 
-    def slope(self):
-        if self.x_end != self.x_start:
-            slope = (self.y_end - self.y_start) / (self.x_end - self.x_start)
-        else:
-            slope = 1000
-        return slope
-
-    def angle(self):
-        angle = np.arctan(self.slope())
-        return angle
-
     def generate_path(self):
         slope = self.slope()
         path_coords = list()
@@ -174,9 +163,9 @@ class Obstacle:
         self.x, self.y = start_coord
         self.angle = angle * math.pi
         self.size = 0.01
-        self.hauteur = 0.115
-        self.largeur = 0.075
-        self.profondeur = 0.064
+        self.height = 0.115
+        self.width = 0.075
+        self.depth = 0.064
 
     def generate_path(self):
         path_coords = list()
@@ -189,7 +178,7 @@ class Obstacle:
 
     def draw(self):
         bpy.ops.mesh.primitive_cube_add(size=self.size, calc_uvs=True, enter_editmode=False,
-                                        align='WORLD', location=((self.x) / 100, (self.y) / 100, self.hauteur / 2),
+                                        align='WORLD', location=((self.x) / 100, (self.y) / 100, self.height / 2),
                                         rotation=(0.0, 0.0, self.angle), scale=(1.0, 1.0, 1.0))
 
-        bpy.context.active_object.dimensions = (self.profondeur, self.largeur, self.hauteur)
+        bpy.context.active_object.dimensions = (self.depth, self.width, self.height)
