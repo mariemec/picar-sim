@@ -8,7 +8,6 @@ class Car:
     acceleration = 0
     current_radius = 0
     obstacle_bypass = None
-    overridden_speed_factor = None
 
     def __init__(self, map, x=0, y=0, orientation=0, speed_factor=0, refresh_rate=24, length = 0.267, width = 0.1, height = 0.1):
         self.position = Position(x, y)
@@ -26,18 +25,20 @@ class Car:
         self.line_follower.check_sensors(self.orientation)
         self.distance_sensor.check_sensor(self.orientation)
 
+        overridden_speed_factor = None
+
         if self.obstacle_bypass is None:
             self.check_bypass()
             next_orientation = self.get_next_orientation()
         else:
-            self.overridden_speed_factor, next_orientation = self.obstacle_bypass.sequence(self.position, self.orientation, self.speed_factor)
+            overridden_speed_factor, next_orientation = self.obstacle_bypass.sequence(self.position, self.orientation, self.speed_factor)
             if self.obstacle_bypass.stage == 7 and 1 in self.line_follower.sensor_state:
                 self.obstacle_bypass = None
 
-        if self.overridden_speed_factor is None:
+        if overridden_speed_factor is None:
             self.update_speed_factor()
         else:
-            self.speed_factor = self.overridden_speed_factor
+            self.speed_factor = overridden_speed_factor
 
         self.current_radius = self.get_turn_radius(next_orientation)
         self.orientation = self.normalize_angle(next_orientation)
@@ -316,8 +317,8 @@ class ObstacleBypass:
     def __init__(self, starting_position, starting_orientation, refresh_rate):
         self.starting_orientation = starting_orientation
         self.refresh_rate = refresh_rate
-        self.next_stage_position_x = starting_position.x + 20 * np.cos(starting_orientation-np.pi)
-        self.next_stage_position_y = starting_position.y + 20 * np.sin(starting_orientation-np.pi)
+        self.next_stage_position_x = starting_position.x - 20 * np.cos(starting_orientation)
+        self.next_stage_position_y = starting_position.y - 20 * np.sin(starting_orientation)
 
     def sequence(self, position, orientation, speed_factor):
         overridden_speed_factor = None
@@ -330,7 +331,9 @@ class ObstacleBypass:
                 self.stage += 1
 
         elif self.stage == 2:
-            if self.next_stage_position_x - 1 < position.x < self.next_stage_position_x + 1 and self.next_stage_position_y - 1 < position.y < self.next_stage_position_y + 1:
+            print(
+                f'{self.next_stage_position_x - 1:.2f} < {position.x:.2f} < {self.next_stage_position_x + 1:.2f} | {self.next_stage_position_y - 1:.2f} < {position.y:.2f} < {self.next_stage_position_y + 1:.2f}')
+            if self.next_stage_position_x - 2 < position.x < self.next_stage_position_x + 2 and self.next_stage_position_y - 2 < position.y < self.next_stage_position_y + 2:
                 self.stage += 1
             else:
                 overridden_speed_factor = -0.3

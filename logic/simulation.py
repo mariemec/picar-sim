@@ -41,7 +41,6 @@ segs.append(Obstacle((166, 100), 90))
 # T final
 segs.append(Line((156, 68), (176, 68)))
 sim = Simulation(m, n, segs)
-sim.trajectory.map.print_map_to_file()
 
 car = sim.car
 car.position.x = 0
