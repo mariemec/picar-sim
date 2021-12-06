@@ -305,6 +305,8 @@ class DistanceSensor:
                         if distance_min > dist:
                             distance_min = dist
 
+        self.distance = distance_min
+
 
 class ObstacleBypass:
     stage = 1

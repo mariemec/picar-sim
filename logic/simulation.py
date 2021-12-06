@@ -18,7 +18,7 @@ segs.append(Curve((183, 17), 17, math.pi * 3 / 2, math.pi * 5 / 2))
 
 # Zone 1
 segs.append(Line((183, 34), (17, 34)))
-# segs.append(Obstacle((100,34), 0))
+segs.append(Obstacle((100,34), 0))
 
 segs.append(Curve((17, 51), 17, math.pi * 1 / 2, math.pi * 3 / 2))
 segs.append(Line((17, 68), (51, 68)))
@@ -50,8 +50,8 @@ car.blender_init()
 
 my_ball = Ball(z=car.height)
 my_ball.blender_init()
-my_ball.holder_obj.parent = car.car_obj
-my_ball.holder_obj.location[2] = car.height / 2 + my_ball.holder_obj.dimensions[2] / 2
+my_ball.socket_obj.parent = car.car_obj
+my_ball.socket_obj.location[2] = car.height / 2 + my_ball.socket_obj.dimensions[2] / 2
 
 init_conditions = InitialConditions(theta_x=0, theta_y=0, omega_x=0, omega_y=0)
 t_relatif = 0
@@ -105,7 +105,7 @@ for i in range(nb_frame):
     my_ball.blender_update(next_x + car.car_obj.location.x, next_y + car.car_obj.location.y)
 
     my_ball.ball_obj.keyframe_insert(data_path="location")
-    my_ball.holder_obj.keyframe_insert(data_path="location")
+    my_ball.socket_obj.keyframe_insert(data_path="location")
     car.car_obj.keyframe_insert(data_path='location')
     car.car_obj.keyframe_insert(data_path='rotation_euler')
     for sensor_obj in car.line_follower.line_follower_obj:
