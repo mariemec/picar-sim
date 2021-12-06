@@ -249,8 +249,8 @@ class DistanceSensor:
             vals = []
 
             angle = int(np.rad2deg(orientation))
-            min_angle = angle - 15 + 90
-            max_angle = angle + 16 + 90
+            min_angle = angle - 15 - 90
+            max_angle = angle + 16 - 90
 
             for phi in range(min_angle, max_angle):
                 yy = y
@@ -316,8 +316,8 @@ class ObstacleBypass:
     def __init__(self, starting_position, starting_orientation, refresh_rate):
         self.starting_orientation = starting_orientation
         self.refresh_rate = refresh_rate
-        self.next_stage_position_x = starting_position.x - 20 * np.cos(starting_orientation)
-        self.next_stage_position_y = starting_position.y - 20 * np.sin(starting_orientation)
+        self.next_stage_position_x = starting_position.x + 20 * np.cos(starting_orientation-np.pi)
+        self.next_stage_position_y = starting_position.y + 20 * np.sin(starting_orientation-np.pi)
 
     def sequence(self, position, orientation, speed_factor):
         overridden_speed_factor = None

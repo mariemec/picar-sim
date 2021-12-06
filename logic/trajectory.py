@@ -170,10 +170,12 @@ class Obstacle:
     def generate_path(self):
         path_coords = list()
         path_coords.append((self.x, self.y))
-        if self.angle ==0:
-            path_coords.append((self.x, self.y+1))
-        if self.angle ==90:
-            path_coords.append((self.x+1, self.y))
+        if self.angle == 0:
+            for y in range(self.y - 7, self.y + 7):
+                path_coords.append((self.x, y))
+        if self.angle == (90 * math.pi):
+            for x in range(self.x - 7, self.x + 7):
+                path_coords.append((x, self.y))
         return path_coords, 2
 
     def draw(self):
