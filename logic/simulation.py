@@ -4,7 +4,7 @@ class Simulation:
     def __init__(self, m, n, segments):
         self.trajectory = Trajectory(m=m, n=n, segments=segments)
         self.car = Car(self.trajectory.map)
-        self.ball = Ball(z=self.car.height)
+        self.ball = Ball(z=self.car.height+0.015)
         self.init_conditions = InitialConditions(theta_x=0, theta_y=0, omega_x=0, omega_y=0)
 
     def run(self):
@@ -80,10 +80,12 @@ class Simulation:
             self.ball.ball_obj.keyframe_insert(data_path="location")
             self.ball.socket_obj.keyframe_insert(data_path="location")
             self.car.car_obj.keyframe_insert(data_path='location')
-            self.car.car_obj.keyframe_insert(data_path='rotation_euler')
+            if (i % 2 == 0):
+                self.car.car_obj.keyframe_insert(data_path='rotation_euler')
             for sensor_obj in self.car.line_follower.line_follower_obj:
                 sensor_obj.keyframe_insert(data_path='location')
 
+            print(f'n={i}\ta_x={a_x:.2f}\ta_y={a_y:.2f}\ttheta_x={np.rad2deg(theta_x):.2f}\ttheta_y={np.rad2deg(theta_y):.2f}')
             # increase timeframe
             t_relatif += 1 / fps
 

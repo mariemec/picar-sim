@@ -56,11 +56,12 @@ class Car:
                 self.update_speed_factor()
             else:
                 self.speed_factor = overridden_speed_factor
+
+            self.current_radius = self.get_turn_radius(next_orientation)
         else:
             self.speed_factor = 0
             next_orientation = self.orientation
 
-        self.current_radius = self.get_turn_radius(next_orientation)
         self.orientation = self.normalize_angle(next_orientation)
         self.position.x = self.position.x + self.speed_factor * np.cos(self.orientation)
         self.position.y = self.position.y + self.speed_factor * np.sin(self.orientation)
@@ -110,7 +111,7 @@ class Car:
         """
         Updates the car's speed_factor depending on the distance sensor reading.
 
-        The car will accelerate until it reaches it's top speed or the
+        The car will accelerate until it reaches its top speed or the
         distance until the next obstacle is under the stopping distance.
         """
         dist = self.distance_sensor.distance
@@ -237,8 +238,7 @@ class LineFollower:
         elif 3 * np.pi / 2 <= orientation < 2 * np.pi:
             phi = -orientation
         else:
-            print('orientation is fucked')
-            print(orientation)
+            print(f'orientation should never be this value: {orientation}')
 
         # position of every sensor
         x0 = 4 * np.sin(phi)
@@ -410,7 +410,6 @@ class ObstacleBypass:
         :return: overridden_speed (if any), next car's orientation
         """
         overridden_speed_factor = None
-        print(f'stage: {self.stage}')
         if self.stage == 1:
             self.wait_counter += 1
             overridden_speed_factor = 0
@@ -419,8 +418,6 @@ class ObstacleBypass:
                 self.stage += 1
 
         elif self.stage == 2:
-            print(
-                f'{self.next_stage_position_x - 1:.2f} < {position.x:.2f} < {self.next_stage_position_x + 1:.2f} | {self.next_stage_position_y - 1:.2f} < {position.y:.2f} < {self.next_stage_position_y + 1:.2f}')
             if self.next_stage_position_x - 2 < position.x < self.next_stage_position_x + 2 and self.next_stage_position_y - 2 < position.y < self.next_stage_position_y + 2:
                 self.stage += 1
             else:
@@ -440,8 +437,6 @@ class ObstacleBypass:
                 self.stage += 1
 
         elif self.stage == 5:
-            print(
-                f'{self.next_stage_position_x - 0.5:.2f} < {position.x:.2f} < {self.next_stage_position_x + 0.5:.2f} | {self.next_stage_position_y - 0.5:.2f} < {position.y:.2f} < {self.next_stage_position_y + 0.5:.2f}')
             if self.next_stage_position_x - 0.5 < position.x < self.next_stage_position_x + 0.5 or self.next_stage_position_y - 0.5 < position.y < self.next_stage_position_y + 0.5:
                 self.next_stage_orientation = orientation - 0.707
                 self.stage += 1
