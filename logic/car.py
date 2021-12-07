@@ -6,6 +6,17 @@ class Car:
 
     def __init__(self, map, x=0, y=0, orientation=0, speed_factor=0, refresh_rate=24, length=0.267, width=0.1,
                  height=0.1):
+        """
+        :param map: Map object containing a 2d map of the trajectory
+        :param x: initial x position of the car
+        :param y: initial y position of the car
+        :param orientation: initial orientation of the car in radiant
+        :param speed_factor: initial speed of the car in cm/s
+        :param refresh_rate: blender's refresh rate
+        :param length: car's length
+        :param width: car's width
+        :param height: car's height
+        """
         self.position = Position(x, y)
         self.orientation = orientation
         self.speed_factor = speed_factor
@@ -18,11 +29,16 @@ class Car:
         self.distance_sensor = DistanceSensor(self.position, map)
 
     def update_position(self):
+        """
+        Updates the car position for each frame.
+        """
         self.line_follower.check_sensors(self.orientation)
         self.distance_sensor.check_sensor(self.orientation)
 
+        # check the line followers sensor to see if it's the end of the track
         num_on_sensors = np.sum(self.line_follower.sensor_state)
-        if num_on_sensors <= 3 :
+        if num_on_sensors <= 3:
+            # used in the bypassing sequence
             overridden_speed_factor = None
 
             if self.obstacle_bypass is None:
@@ -32,6 +48,7 @@ class Car:
                 overridden_speed_factor, next_orientation = self.obstacle_bypass.sequence(self.position, self.orientation,
                                                                                           self.speed_factor,
                                                                                           self.distance_sensor.distance)
+                # if the line follower see a line and it's the final bypass stage, the sequence is finished
                 if self.obstacle_bypass.stage == 7 and 1 in self.line_follower.sensor_state:
                     self.obstacle_bypass = None
 
@@ -49,13 +66,19 @@ class Car:
         self.position.y = self.position.y + self.speed_factor * np.sin(self.orientation)
 
     def check_bypass(self):
+        """
+        Creates a ObstacleBypass object if the car needs to bypass an obstacle.
+        :return:
+        """
         if self.distance_sensor.distance <= self.distance_sensor.stopping_distance:
             self.obstacle_bypass = ObstacleBypass(self.position, self.orientation, self.refresh_rate)
 
     def get_next_orientation(self):
         """
-        public method to car orientation
+        Computes the next orientation depending on the line follower sensors reading.
+        :return: next car's orientation
         """
+        # ss -> sensor_state
         ss = self.line_follower.sensor_state
         next_orientation = self.orientation
         if ss[2] != 1:
@@ -78,11 +101,18 @@ class Car:
         try:
             self.line_follower.last_sensor = ss.index(1)  # get index of active sensor
         except:
+            # since there is not any active sensor, last_sensor has to stay the same
             pass
 
         return round(next_orientation, 4)
 
     def update_speed_factor(self):
+        """
+        Updates the car's speed_factor depending on the distance sensor reading.
+
+        The car will accelerate until it reaches it's top speed or the
+        distance until the next obstacle is under the stopping distance.
+        """
         dist = self.distance_sensor.distance
         stop_dist = self.distance_sensor.stopping_distance
 
@@ -96,6 +126,11 @@ class Car:
         self.speed_factor = round(self.speed_factor, 4)
 
     def get_turn_radius(self, next_orientation):
+        """
+        Computes the car's current turning radius based on previous orientation, next orientation and position.
+        :param next_orientation: car's next orientation
+        :return: car's current turning radius
+        """
         x1 = self.position.x
         x2 = self.position.x + self.speed_factor * np.cos(next_orientation)
         y1 = self.position.y
@@ -106,6 +141,11 @@ class Car:
         return (delta_s / delta_theta) / 100
 
     def normalize_angle(self, angle):
+        """
+        Keeps the car's orientation between 0 and 2pi.
+        :param angle: angle in rad
+        :return: normalized angle in rad
+        """
         if angle > 2 * np.pi:
             angle -= 2 * np.pi
         if angle < 0:
@@ -113,6 +153,9 @@ class Car:
         return angle
 
     def blender_init(self):
+        """
+        Creates the car object and sensors in blender.
+        """
         try:
             self.car_obj = bpy.data.objects['Car']
         except:
@@ -125,6 +168,11 @@ class Car:
         self.line_follower.blender_init()
 
     def blender_update(self):
+        """
+        Updates the car's object and sensors in blender with the updated position and orientation.
+
+        Also computes the car's speed and acceleration.
+        """
         self.update_position()
         self.car_obj.location[0] = self.position.x / 100
         self.car_obj.location[1] = self.position.y / 100
@@ -137,11 +185,6 @@ class Car:
 
 
 class LineFollower:
-    """
-    the line follower dictates the car orientation.
-
-    >> update_orientation will return an updated orientation based on the line follower sensors state.
-    """
     line_follower_obj = []
     sensor_state = [0] * 5
     x_pos = [0] * 5
@@ -149,11 +192,19 @@ class LineFollower:
     last_sensor = None
 
     def __init__(self, position, map, position_offset=0.0):
+        """
+        :param position: Position object containg the coordinates of the car
+        :param map: Map object containing a 2d map of the trajectory
+        :param position_offset: position offset for the line follower sensors (offset from the car)
+        """
         self.position = position
         self.map = map
         self.position_offset = position_offset
 
     def blender_init(self):
+        """
+        Initialise the line follower sensors in blender
+        """
         for i in range(5):
             bpy.ops.mesh.primitive_cube_add(size=0.01, location=(self.position.x, self.position.y + (i - 2) / 100, 0),
                                             rotation=(0, 0, 0))
@@ -161,16 +212,22 @@ class LineFollower:
             self.line_follower_obj += [bpy.data.objects[f'suiveur_ligne{i}']]
 
     def blender_update(self):
+        """
+        Updates the sensor's position in blender
+        :return:
+        """
         for i in range(5):
             self.line_follower_obj[i].location[0] = self.x_pos[i] / 100
             self.line_follower_obj[i].location[1] = self.y_pos[i] / 100
 
     def check_sensors(self, orientation):
         """
-        private method to get the line follower sensors state
+        Gets the line follower sensor's state
         :param orientation: current car orientation
-        :return: list containing the 5 sensors state
+        :return: list containing the 5 sensor's state
         """
+
+        #  phi is the angle between the current quadrant right most border and the car orientation
         if 0 <= orientation < np.pi / 2:
             phi = orientation
         elif np.pi / 2 <= orientation < np.pi:
@@ -183,6 +240,7 @@ class LineFollower:
             print('orientation is fucked')
             print(orientation)
 
+        # position of every sensor
         x0 = 4 * np.sin(phi)
         x1 = 2 * np.sin(phi)
         x2 = self.position.x + self.position_offset * np.cos(orientation)
@@ -232,6 +290,7 @@ class LineFollower:
                         x = x2 - x_offsets[i]
                         y = y2 - y_offsets[i]
 
+            # peeks the map at the current sensor's position. If the map contains a 1, there's a line under the sensor.
             self.sensor_state[i] = self.map.peek(int(round(x)), int(round(y)))
             self.x_pos[i] = x
             self.y_pos[i] = y
@@ -321,12 +380,25 @@ class ObstacleBypass:
     next_stage_orientation_start = 0
 
     def __init__(self, starting_position, starting_orientation, refresh_rate):
+        """
+        :param starting_position: car's starting position
+        :param starting_orientation: car's startgin orientation
+        :param refresh_rate: blender's refresh rate
+        """
         self.starting_orientation = starting_orientation
         self.refresh_rate = refresh_rate
         self.next_stage_position_x = starting_position.x - 20 * np.cos(starting_orientation)
         self.next_stage_position_y = starting_position.y - 20 * np.sin(starting_orientation)
 
     def sequence(self, position, orientation, speed_factor, next_obstacle_distance):
+        """
+        There's a total of 7 stage. Each stages correspond to a bypass step.
+        :param position: current car's position
+        :param orientation: current car's orientation
+        :param speed_factor: current car's speed factor
+        :param next_obstacle_distance: current distance sensor's reading
+        :return: overridden_speed (if any), next car's orientation
+        """
         overridden_speed_factor = None
         print(f'stage: {self.stage}')
         if self.stage == 1:
