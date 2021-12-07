@@ -1,15 +1,11 @@
-import time
-
-import numpy as np
-
-
 class Car:
     car_obj = None
     acceleration = 0
     current_radius = 0
     obstacle_bypass = None
 
-    def __init__(self, map, x=0, y=0, orientation=0, speed_factor=0, refresh_rate=24, length = 0.267, width = 0.1, height = 0.1):
+    def __init__(self, map, x=0, y=0, orientation=0, speed_factor=0, refresh_rate=24, length=0.267, width=0.1,
+                 height=0.1):
         self.position = Position(x, y)
         self.orientation = orientation
         self.speed_factor = speed_factor
@@ -31,7 +27,9 @@ class Car:
             self.check_bypass()
             next_orientation = self.get_next_orientation()
         else:
-            overridden_speed_factor, next_orientation = self.obstacle_bypass.sequence(self.position, self.orientation, self.speed_factor, self.distance_sensor.distance)
+            overridden_speed_factor, next_orientation = self.obstacle_bypass.sequence(self.position, self.orientation,
+                                                                                      self.speed_factor,
+                                                                                      self.distance_sensor.distance)
             if self.obstacle_bypass.stage == 7 and 1 in self.line_follower.sensor_state:
                 self.obstacle_bypass = None
 
@@ -113,8 +111,9 @@ class Car:
         try:
             self.car_obj = bpy.data.objects['Car']
         except:
-            bpy.ops.mesh.primitive_cube_add(size=1, location=(self.position.x, self.position.y, self.height/2),
-                                            rotation=(0, 0, self.orientation), scale=(self.length, self.width, self.height))
+            bpy.ops.mesh.primitive_cube_add(size=1, location=(self.position.x, self.position.y, self.height / 2),
+                                            rotation=(0, 0, self.orientation),
+                                            scale=(self.length, self.width, self.height))
             bpy.context.active_object.name = 'Car'
             self.car_obj = bpy.data.objects['Car']
 
@@ -250,60 +249,61 @@ class DistanceSensor:
             vals = []
 
             angle = int(np.rad2deg(orientation))
-            min_angle = angle - 15 - 90
-            max_angle = angle + 16 - 90
+
+            min_angle = angle - 15
+            max_angle = angle + 16
 
             for phi in range(min_angle, max_angle):
                 yy = y
                 for val in yy:
                     val = list(val)
                     if 0 < phi < 90:
-                        if (val[0] < x[0]) and (val[1] > x[1]):
+                        if (val[0] > x[0]) and (val[1] > x[1]):
                             if val not in vals:
                                 vals += [val]
 
                     if 90 < phi < 180:
-                        if val[0] > x[0] and val[1] < x[1]:
-                            if val not in vals:
-                                vals += [val]
-
-                    if 180 < phi < 270:
-                        if val[0] > x[0] and val[1] > x[1]:
-                            if val not in vals:
-                                vals += [val]
-
-                    if 270 < phi < 360:
                         if val[0] < x[0] and val[1] > x[1]:
                             if val not in vals:
                                 vals += [val]
 
+                    if 180 < phi < 270:
+                        if val[0] < x[0] and val[1] < x[1]:
+                            if val not in vals:
+                                vals += [val]
+
+                    if 270 < phi < 360:
+                        if val[0] > x[0] and val[1] < x[1]:
+                            if val not in vals:
+                                vals += [val]
+
                     if phi == 0 or phi == 360:
-                        if val[1] == x[1] and val[0] < x[0]:
+                        if val[1] == x[1] and val[0] > x[0]:
                             if val not in vals:
                                 vals += [val]
                     if phi == 90:
-                        if val[1] == x[1] and val[0] > x[0]:
+                        if val[1] > x[1] and val[0] == x[0]:
                             if val not in vals:
                                 vals += [val]
 
                     if phi == 180:
-                        if val[0] == x[0] and val[1] < x[1]:
+                        if val[0] < x[0] and val[1] == x[1]:
                             if val not in vals:
                                 vals += [val]
                     if phi == 270:
-                        if val[1] == x[1] and val[0] > x[0]:
+                        if val[1] < x[1] and val[0] == x[0]:
                             if val not in vals:
                                 vals += [val]
             if np.array(vals).any():
                 dd = np.array(vals) - x
                 # +- 15 pcq le sensor voit dans un rayon de 30 deg
                 for phi in range(min_angle, max_angle):
-                    on_ray = np.abs(dd @ (np.sin(np.deg2rad(-phi - 90)), np.cos(np.deg2rad(-phi - 90)))) < np.sqrt(0.5)
+                    on_ray = np.abs(dd @ (np.sin(np.deg2rad(-phi)), np.cos(np.deg2rad(-phi)))) < np.sqrt(0.5)
                     if any(on_ray):
                         vals = np.array(vals)
                         ymin = vals[on_ray][np.argmin(np.einsum('ij,ij->i', dd[on_ray], dd[on_ray]))]
                         dist = np.sqrt((x[0] - ymin[0]) ** 2 + (x[1] - ymin[1]) ** 2)
-                        if distance_min > dist:
+                        if distance_min >= dist:
                             distance_min = dist
 
         self.distance = distance_min
@@ -313,6 +313,7 @@ class ObstacleBypass:
     stage = 1
     next_stage_orientation = 0
     wait_counter = 0
+    next_stage_orientation_start = 0
 
     def __init__(self, starting_position, starting_orientation, refresh_rate):
         self.starting_orientation = starting_orientation
@@ -339,27 +340,27 @@ class ObstacleBypass:
                 overridden_speed_factor = -0.3
 
         elif self.stage == 3:
-            hypotenus = 30 / np.cos(0.40)
-            self.next_stage_position_x = position.x + hypotenus * np.cos(orientation)
-            self.next_stage_position_y = position.y + hypotenus * np.sin(orientation)
+            self.next_stage_orientation_start = orientation
             self.stage += 1
 
         elif self.stage == 4:
-            print(f'distance: {next_obstacle_distance}')
             if speed_factor > 0:
-                orientation += 0.03
+                orientation += 0.04
             if next_obstacle_distance > 99999:
+                hypotenus = 30 / np.cos(orientation - self.next_stage_orientation_start)
+                self.next_stage_position_x = position.x + hypotenus * np.cos(orientation)
+                self.next_stage_position_y = position.y + hypotenus * np.sin(orientation)
                 self.stage += 1
 
         elif self.stage == 5:
             print(
                 f'{self.next_stage_position_x - 0.5:.2f} < {position.x:.2f} < {self.next_stage_position_x + 0.5:.2f} | {self.next_stage_position_y - 0.5:.2f} < {position.y:.2f} < {self.next_stage_position_y + 0.5:.2f}')
             if self.next_stage_position_x - 0.5 < position.x < self.next_stage_position_x + 0.5 or self.next_stage_position_y - 0.5 < position.y < self.next_stage_position_y + 0.5:
-                self.next_stage_orientation = orientation - 0.85
+                self.next_stage_orientation = orientation - 0.707
                 self.stage += 1
 
         elif self.stage == 6:
-            orientation -= 0.03
+            orientation -= 0.04
             if orientation < self.next_stage_orientation:
                 self.stage += 1
 

@@ -171,10 +171,10 @@ class Obstacle:
         path_coords = list()
         path_coords.append((self.x, self.y))
         if self.angle == 0:
-            for y in range(self.y - 7, self.y + 7):
+            for y in range(self.y - 3, self.y + 3):
                 path_coords.append((self.x, y))
         if self.angle == (90 * math.pi):
-            for x in range(self.x - 7, self.x + 7):
+            for x in range(self.x - 3, self.x + 3):
                 path_coords.append((x, self.y))
         return path_coords, 2
 
