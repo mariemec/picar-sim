@@ -6,7 +6,7 @@ class Simulation:
 
 ## MAIN CODE
 m, n = 300, 300
-nb_frame = 1000
+nb_frame = 1800
 bpy.context.scene.frame_end = nb_frame
 fps = 24
 segs = []
@@ -18,7 +18,7 @@ segs.append(Curve((183, 17), 17, math.pi * 3 / 2, math.pi * 5 / 2))
 
 # Zone 1
 segs.append(Line((183, 34), (17, 34)))
-# segs.append(Obstacle((100,34), 0))
+segs.append(Obstacle((100,34), 0))
 
 segs.append(Curve((17, 51), 17, math.pi * 1 / 2, math.pi * 3 / 2))
 segs.append(Line((17, 68), (51, 68)))
@@ -26,7 +26,7 @@ segs.append(Curve((51, 85), 17, math.pi * 3 / 2, math.pi * 2))
 
 # Zone 2
 segs.append(Line((68, 85), (68, 149)))
-# segs.append(Obstacle((68,125), 90))
+segs.append(Obstacle((68,110), 90))
 
 segs.append(Curve((85, 149), 17, math.pi * 1 / 2, math.pi))
 segs.append(Curve((85, 183), 17, math.pi * 3 / 2, math.pi * 2))
@@ -36,12 +36,11 @@ segs.append(Curve((149, 183), 17, 0, math.pi * 1 / 2))
 
 # Zone 3
 segs.append(Line((166, 183), (166, 68)))
-segs.append(Obstacle((166, 100), 90))
+segs.append(Obstacle((166, 130), 90))
 
 # T final
 segs.append(Line((156, 68), (176, 68)))
 sim = Simulation(m, n, segs)
-# sim.trajectoire.map.print_map_to_file()
 
 car = sim.car
 car.position.x = 0
@@ -50,8 +49,8 @@ car.blender_init()
 
 my_ball = Ball(z=car.height)
 my_ball.blender_init()
-my_ball.holder_obj.parent = car.car_obj
-my_ball.holder_obj.location[2] = car.height / 2 + my_ball.holder_obj.dimensions[2] / 2
+my_ball.socket_obj.parent = car.car_obj
+my_ball.socket_obj.location[2] = car.height / 2 + my_ball.socket_obj.dimensions[2] / 2
 
 init_conditions = InitialConditions(theta_x=0, theta_y=0, omega_x=0, omega_y=0)
 t_relatif = 0
@@ -105,7 +104,7 @@ for i in range(nb_frame):
     my_ball.blender_update(next_x + car.car_obj.location.x, next_y + car.car_obj.location.y)
 
     my_ball.ball_obj.keyframe_insert(data_path="location")
-    my_ball.holder_obj.keyframe_insert(data_path="location")
+    my_ball.socket_obj.keyframe_insert(data_path="location")
     car.car_obj.keyframe_insert(data_path='location')
     car.car_obj.keyframe_insert(data_path='rotation_euler')
     for sensor_obj in car.line_follower.line_follower_obj:
