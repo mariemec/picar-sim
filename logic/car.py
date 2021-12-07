@@ -31,7 +31,7 @@ class Car:
             self.check_bypass()
             next_orientation = self.get_next_orientation()
         else:
-            overridden_speed_factor, next_orientation = self.obstacle_bypass.sequence(self.position, self.orientation, self.speed_factor)
+            overridden_speed_factor, next_orientation = self.obstacle_bypass.sequence(self.position, self.orientation, self.speed_factor, self.distance_sensor.distance)
             if self.obstacle_bypass.stage == 7 and 1 in self.line_follower.sensor_state:
                 self.obstacle_bypass = None
 
@@ -320,7 +320,7 @@ class ObstacleBypass:
         self.next_stage_position_x = starting_position.x - 20 * np.cos(starting_orientation)
         self.next_stage_position_y = starting_position.y - 20 * np.sin(starting_orientation)
 
-    def sequence(self, position, orientation, speed_factor):
+    def sequence(self, position, orientation, speed_factor, next_obstacle_distance):
         overridden_speed_factor = None
         print(f'stage: {self.stage}')
         if self.stage == 1:
@@ -339,21 +339,23 @@ class ObstacleBypass:
                 overridden_speed_factor = -0.3
 
         elif self.stage == 3:
-            hypotenus = 30 / np.cos(0.35)
+            hypotenus = 30 / np.cos(0.40)
             self.next_stage_position_x = position.x + hypotenus * np.cos(orientation)
             self.next_stage_position_y = position.y + hypotenus * np.sin(orientation)
-            self.next_stage_orientation = orientation + 0.35
             self.stage += 1
 
         elif self.stage == 4:
+            print(f'distance: {next_obstacle_distance}')
             if speed_factor > 0:
                 orientation += 0.03
-            if orientation > self.next_stage_orientation:
+            if next_obstacle_distance > 99999:
                 self.stage += 1
 
         elif self.stage == 5:
+            print(
+                f'{self.next_stage_position_x - 0.5:.2f} < {position.x:.2f} < {self.next_stage_position_x + 0.5:.2f} | {self.next_stage_position_y - 0.5:.2f} < {position.y:.2f} < {self.next_stage_position_y + 0.5:.2f}')
             if self.next_stage_position_x - 0.5 < position.x < self.next_stage_position_x + 0.5 or self.next_stage_position_y - 0.5 < position.y < self.next_stage_position_y + 0.5:
-                self.next_stage_orientation = orientation - 0.60
+                self.next_stage_orientation = orientation - 0.85
                 self.stage += 1
 
         elif self.stage == 6:

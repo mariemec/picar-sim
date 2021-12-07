@@ -36,7 +36,7 @@ segs.append(Curve((149, 183), 17, 0, math.pi * 1 / 2))
 
 # Zone 3
 segs.append(Line((166, 183), (166, 68)))
-segs.append(Obstacle((166, 100), 90))
+segs.append(Obstacle((166, 130), 90))
 
 # T final
 segs.append(Line((156, 68), (176, 68)))
