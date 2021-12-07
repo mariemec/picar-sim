@@ -21,22 +21,27 @@ class Car:
         self.line_follower.check_sensors(self.orientation)
         self.distance_sensor.check_sensor(self.orientation)
 
-        overridden_speed_factor = None
+        num_on_sensors = np.sum(self.line_follower.sensor_state)
+        if num_on_sensors <= 3 :
+            overridden_speed_factor = None
 
-        if self.obstacle_bypass is None:
-            self.check_bypass()
-            next_orientation = self.get_next_orientation()
-        else:
-            overridden_speed_factor, next_orientation = self.obstacle_bypass.sequence(self.position, self.orientation,
-                                                                                      self.speed_factor,
-                                                                                      self.distance_sensor.distance)
-            if self.obstacle_bypass.stage == 7 and 1 in self.line_follower.sensor_state:
-                self.obstacle_bypass = None
+            if self.obstacle_bypass is None:
+                self.check_bypass()
+                next_orientation = self.get_next_orientation()
+            else:
+                overridden_speed_factor, next_orientation = self.obstacle_bypass.sequence(self.position, self.orientation,
+                                                                                          self.speed_factor,
+                                                                                          self.distance_sensor.distance)
+                if self.obstacle_bypass.stage == 7 and 1 in self.line_follower.sensor_state:
+                    self.obstacle_bypass = None
 
-        if overridden_speed_factor is None:
-            self.update_speed_factor()
+            if overridden_speed_factor is None:
+                self.update_speed_factor()
+            else:
+                self.speed_factor = overridden_speed_factor
         else:
-            self.speed_factor = overridden_speed_factor
+            self.speed_factor = 0
+            next_orientation = self.orientation
 
         self.current_radius = self.get_turn_radius(next_orientation)
         self.orientation = self.normalize_angle(next_orientation)

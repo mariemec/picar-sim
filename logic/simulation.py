@@ -8,7 +8,7 @@ class Simulation:
         self.init_conditions = InitialConditions(theta_x=0, theta_y=0, omega_x=0, omega_y=0)
 
     def run(self):
-        nb_frame = 1000
+        nb_frame = 1800
         bpy.context.scene.frame_end = nb_frame
         fps = 24
         t_relatif = 0
@@ -83,8 +83,6 @@ class Simulation:
             self.car.car_obj.keyframe_insert(data_path='rotation_euler')
             for sensor_obj in self.car.line_follower.line_follower_obj:
                 sensor_obj.keyframe_insert(data_path='location')
-            print(
-                f'n={i}\torientation={np.rad2deg(self.car.orientation)}\tradius={self.car.current_radius}\tv={self.car.speed:.2f}m/s\tax={a_x}\tay={a_y}\ttheta_x={np.rad2deg(theta_x):.2f}\tthta_y={np.rad2deg(theta_y):.2f}')
 
             # increase timeframe
             t_relatif += 1 / fps
@@ -96,11 +94,10 @@ segs = []
 # Départ
 segs.append(Line((0, 0), (183, 0)))
 segs.append(Curve((183, 17), 17, math.pi * 3 / 2, math.pi * 5 / 2))
-# segs.append(Obstacle((100,0), 0))
 
 # Zone 1
 segs.append(Line((183, 34), (17, 34)))
-# segs.append(Obstacle((100,34), 0))
+segs.append(Obstacle((100,34), 0))
 
 segs.append(Curve((17, 51), 17, math.pi * 1 / 2, math.pi * 3 / 2))
 segs.append(Line((17, 68), (51, 68)))
@@ -108,7 +105,7 @@ segs.append(Curve((51, 85), 17, math.pi * 3 / 2, math.pi * 2))
 
 # Zone 2
 segs.append(Line((68, 85), (68, 149)))
-# segs.append(Obstacle((68,125), 90))
+segs.append(Obstacle((68,110), 90))
 
 segs.append(Curve((85, 149), 17, math.pi * 1 / 2, math.pi))
 segs.append(Curve((85, 183), 17, math.pi * 3 / 2, math.pi * 2))
@@ -118,7 +115,7 @@ segs.append(Curve((149, 183), 17, 0, math.pi * 1 / 2))
 
 # Zone 3
 segs.append(Line((166, 183), (166, 68)))
-segs.append(Obstacle((166, 100), 90))
+segs.append(Obstacle((166, 120), 90))
 
 # T final
 segs.append(Line((156, 68), (176, 68)))
@@ -128,3 +125,4 @@ sim = Simulation(m, n, segs)
 # sim.trajectoire.map.print_map_to_file()
 
 sim.run()
+
