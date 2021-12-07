@@ -238,7 +238,8 @@ class LineFollower:
 
 
 class DistanceSensor:
-    distance = 9999999  # temporary value
+    distance = 9999999
+    #(car+ obstacle)/2 +10cm because the positions are in the middle
     stopping_distance = 27
 
     def __init__(self, position, map):
@@ -246,15 +247,18 @@ class DistanceSensor:
         self.map = map
 
     def check_sensor(self, orientation):
+        #car position
         x = np.array([self.position.x, self.position.y])
+        #obstacles positions
         y = np.argwhere(self.map._map == 2)
 
+        #reset of the last seen distance
         distance_min = 9999999
         if y.any():
             vals = []
-
             angle = int(np.rad2deg(orientation))
 
+            #sensor looks in a ray of 30 degrees
             min_angle = angle - 15
             max_angle = angle + 16
 
@@ -262,6 +266,7 @@ class DistanceSensor:
                 yy = y
                 for val in yy:
                     val = list(val)
+                    #conditions to exclude obstacles behind the car
                     if 0 < phi < 90:
                         if (val[0] > x[0]) and (val[1] > x[1]):
                             if val not in vals:
@@ -299,18 +304,23 @@ class DistanceSensor:
                         if val[1] < x[1] and val[0] == x[0]:
                             if val not in vals:
                                 vals += [val]
+
             if np.array(vals).any():
                 dd = np.array(vals) - x
-                # +- 15 pcq le sensor voit dans un rayon de 30 deg
                 for phi in range(min_angle, max_angle):
+                    #find obstacles on the ray with normal vectors
                     on_ray = np.abs(dd @ (np.sin(np.deg2rad(-phi)), np.cos(np.deg2rad(-phi)))) < np.sqrt(0.5)
+
                     if any(on_ray):
                         vals = np.array(vals)
+                        #coordinates of the nearest obstacle on the ray
                         ymin = vals[on_ray][np.argmin(np.einsum('ij,ij->i', dd[on_ray], dd[on_ray]))]
                         dist = np.sqrt((x[0] - ymin[0]) ** 2 + (x[1] - ymin[1]) ** 2)
                         if distance_min >= dist:
                             distance_min = dist
-
+        #add errors of the real sensor - equation found with excel and distribution values
+        if distance_min is not 9999999:
+            distance_min = 0.9974*distance_min-0.9919
         self.distance = distance_min
 
 
