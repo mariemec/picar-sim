@@ -1,4 +1,5 @@
 # ----------------------- BILLE -----------------------
+
 class Ball:
     g = 9.81
 
@@ -11,7 +12,16 @@ class Ball:
         self.socket_obj = None
 
     def calculate_next_theta(self, t, a, theta_0, omega_0, u):
-        damping = np.exp(-u * t)
+        """
+        :param t: time (float)
+        :param a: linear acceleration of the car (float)
+        :param theta_0: initial angle with vertical (float)
+        :param omega_0: initial angular velocity (float)
+        :param u: friction coefficient (float)
+        :return: next angle with vertical of ball, in rads (float)
+        """
+        # Differential equation of accelerating pendulum (based on force diagram) : theta'' + g/L theta' = a/L
+        friction_curve = np.exp(-u * t)
         b = self.g / self.radius_pendulum
         c = -a / self.radius_pendulum
         b_sqrt = np.sqrt(b)
@@ -19,12 +29,22 @@ class Ball:
         A = theta_0 - c / b
         B = omega_0 / b_sqrt
 
-        position = A * np.cos(b_sqrt * t) + B * np.sin(b_sqrt * t) + c / b
+        # By solving the differential equation mentionned above, we get:
+        theta = A * np.cos(b_sqrt * t) + B * np.sin(b_sqrt * t) + c / b
 
-        return position * damping  # Position = Theta * e^(-damp*t)
+        return theta * friction_curve
 
     def calculate_next_omega(self, t, a, theta_0, omega_0, u):
-        damping = np.exp(-u * t)
+        """
+        :param t: time (float)
+        :param a: linear acceleration of the car (float)
+        :param theta_0: initial angle with vertical (float)
+        :param omega_0: initial angular velocity (float)
+        :param u: friction coefficient (float)
+        :return: next angular velocity of ball(float)
+        """
+        # Diffrential equation of accelerating pendulum (based on force diagram) : theta'' + g/L theta' = -a/L
+        friction_curve = np.exp(-u * t)
         b = self.g / self.radius_pendulum
         c = -a / self.radius_pendulum
         b_sqrt = np.sqrt(b)
@@ -32,12 +52,20 @@ class Ball:
         A = theta_0 - c / b
         B = omega_0 / b_sqrt
 
-        position = A * np.cos(b_sqrt * t) + B * np.sin(b_sqrt * t) + c / b
+        # By solving the differential equation mentionned above, we get:
+        theta = A * np.cos(b_sqrt * t) + B * np.sin(b_sqrt * t) + c / b
+
+        # By differentiating theta, we get:
         angular_velocity = -A * np.sin(b_sqrt * t) * b_sqrt + B * np.cos(b_sqrt * t) * b_sqrt
 
-        return angular_velocity * damping + -u * damping * position  # Velocity = d/dt(Position)
+        return angular_velocity * friction_curve + -u * friction_curve * theta  # Dampened Angular velocity = d/dt(theta*friction_curve)
 
     def calculate_next_pos(self, theta_x, theta_y):
+        """
+        :param theta_x: angle with vertical in x-axis(rads)
+        :param theta_y: angle with vertical in y-axis(rads)
+        :return: x, y positions
+        """
         next_x = self.radius_pendulum * np.sin(theta_x)
         next_y = self.radius_pendulum * np.sin(theta_y)
         return next_x, next_y
@@ -80,6 +108,14 @@ class InitialConditions():
         self.omega_y = omega_y
 
     def reset(self, theta_x, theta_y, omega_x, omega_y):
+        """
+        Function that keeps track of most recent initial conditions of ball. Every time the acceleration of the car
+        changes, the ball oscillation must be recalculated with new parameters.
+        :param theta_x: current angle with vertical of the ball in x-axis (rads)
+        :param theta_y: current angle with vertical of the ball in y-axis (rads)
+        :param omega_x: current angular velocity in x-axis
+        :param omega_y: current angular velocity in y-axis
+        """
         self.theta_x = theta_x
         self.theta_y = theta_y
 
