@@ -120,7 +120,7 @@ class Car:
             # arret
             self.speed_factor = 0
         elif dist > stop_dist:
-            if self.speed_factor < 0.91666:
+            if self.speed_factor < 0.79625:
                 self.speed_factor += 0.1
 
         self.speed_factor = round(self.speed_factor, 4)
