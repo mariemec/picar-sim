@@ -11,6 +11,6 @@ import numpy as np
 
 # Use this main to generate a black and white image of the track
 if __name__ == '__main__':
-    original_array = np.loadtxt("output.txt").reshape(300, 300).astype('uint8')*255
+    original_array = np.loadtxt("C:\\Users\\faund\Desktop\\tuto_blender\\output.txt").reshape(300, 300).astype('uint8')*127
     im = Image.fromarray(original_array)
     im.save('track.png')
