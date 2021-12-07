@@ -21,8 +21,8 @@ class Simulation:
 
         self.car.blender_init()
         self.ball.blender_init()
-        self.ball.holder_obj.parent = self.car.car_obj
-        self.ball.holder_obj.location[2] = self.car.height / 2 + self.ball.holder_obj.dimensions[2] / 2
+        self.ball.socket_obj.parent = self.car.car_obj
+        self.ball.socket_obj.location[2] = self.car.height / 2 + self.ball.socket_obj.dimensions[2] / 2
 
         for i in range(nb_frame):
             bpy.context.scene.frame_set(i)
@@ -78,7 +78,7 @@ class Simulation:
 
             # Insert all keyframes for animation
             self.ball.ball_obj.keyframe_insert(data_path="location")
-            self.ball.holder_obj.keyframe_insert(data_path="location")
+            self.ball.socket_obj.keyframe_insert(data_path="location")
             self.car.car_obj.keyframe_insert(data_path='location')
             self.car.car_obj.keyframe_insert(data_path='rotation_euler')
             for sensor_obj in self.car.line_follower.line_follower_obj:
