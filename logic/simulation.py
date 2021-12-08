@@ -8,7 +8,7 @@ class Simulation:
         self.init_conditions = InitialConditions(theta_x=0, theta_y=0, omega_x=0, omega_y=0)
 
     def run(self):
-        nb_frame = 1800
+        nb_frame = 1900
         bpy.context.scene.frame_end = nb_frame
         fps = 24
         t_relatif = 0
@@ -85,10 +85,22 @@ class Simulation:
             for sensor_obj in self.car.line_follower.line_follower_obj:
                 sensor_obj.keyframe_insert(data_path='location')
 
-            print(f'n={i}\ta_x={a_x:.2f}\ta_y={a_y:.2f}\ttheta_x={np.rad2deg(theta_x):.2f}\ttheta_y={np.rad2deg(theta_y):.2f}')
-            # increase timeframe
+            print(
+                f'n={i}\ta_x={a_x:.2f}\ta_y={a_y:.2f}\tvitesse={v:.2f}m/s\tspeed_factor={sim.car.speed_factor:.2f}\ttheta_x={np.rad2deg(theta_x):.2f}\ttheta_y={np.rad2deg(theta_y):.2f}')            # increase timeframe
             t_relatif += 1 / fps
 
+        max_theta_x_index = np.argmax(np.absolute(sx_t))
+        max_theta_x = np.rad2deg(np.amax(np.absolute(sx_t)))
+        max_theta_y_index = np.argmax(np.absolute(sy_t))
+        max_theta_y = np.rad2deg(np.amax(np.absolute(sy_t)))
+        print(f'max theta_x : {max_theta_x}')
+        print(f'max theta_y : {max_theta_y}')
+        if max_theta_x > 8:
+            print(f'Ball fell out in x axis at frame={max_theta_x_index}!')
+        elif max_theta_y > 8 :
+            print(f'Ball fell out in y axis at frame={max_theta_y_index}!')
+        else:
+            print('Ball stayed in socket. Success!')
 
 ## MAIN CODE
 segs = []

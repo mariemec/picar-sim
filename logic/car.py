@@ -118,10 +118,15 @@ class Car:
         stop_dist = self.distance_sensor.stopping_distance
 
         if dist < stop_dist:
-            # arret
+            # stop
             self.speed_factor = 0
+        elif stop_dist < dist < 1.2*stop_dist:
+            # slow down
+            if (self.speed_factor-0.05) > 0:
+                self.speed_factor -= 0.05
         elif dist > stop_dist:
-            if self.speed_factor < 0.79625:
+            # accelerate to max speed
+            if self.speed_factor < 0.70: # 70% of max speed
                 self.speed_factor += 0.1
 
         self.speed_factor = round(self.speed_factor, 4)
